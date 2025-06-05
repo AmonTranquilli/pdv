@@ -4,6 +4,8 @@ session_start();
 require_once '../../includes/conexao.php'; // Caminho para a conexão
 
 // 1. Verifica se o usuário está logado
+// Ajuste esta lógica conforme o seu sistema de autenticação.
+// O exemplo abaixo verifica uma variável de sessão 'logado'.
 if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
     // Redireciona para a página de login do admin (ajustado para subir 2 níveis)
     header("Location: ../login.php"); 
@@ -21,11 +23,11 @@ ob_start();
         <?php
         // Exibe mensagens de sucesso ou erro, se houver
         if (isset($_SESSION['mensagem_sucesso'])) {
-            echo '<p class="mensagem sucesso">' . $_SESSION['mensagem_sucesso'] . '</p>';
+            echo '<p class="mensagem sucesso">' . htmlspecialchars($_SESSION['mensagem_sucesso']) . '</p>';
             unset($_SESSION['mensagem_sucesso']);
         }
         if (isset($_SESSION['mensagem_erro'])) {
-            echo '<p class="mensagem erro">' . $_SESSION['mensagem_erro'] . '</p>';
+            echo '<p class="mensagem erro">' . htmlspecialchars($_SESSION['mensagem_erro']) . '</p>';
             unset($_SESSION['mensagem_erro']);
         }
         ?>
@@ -51,11 +53,10 @@ ob_start();
         <tbody>
             <?php
             // Consulta para buscar os pedidos
-            // Removido 'observacoes_pedidos' da lista de colunas selecionadas
             $sql = "SELECT id, id_cliente, nome_cliente, telefone_cliente, endereco_entrega, numero_entrega, bairro_entrega, complemento_entrega, referencia_entrega, data_pedido, total_pedido, forma_pagamento, troco_para, troco, status FROM pedidos ORDER BY data_pedido DESC";
             $result = $conn->query($sql);
 
-            if ($result->num_rows > 0) {
+            if ($result && $result->num_rows > 0) {
                 while ($pedido = $result->fetch_assoc()) {
                     ?>
                     <tr>
@@ -69,7 +70,9 @@ ob_start();
                             if (!empty($pedido['complemento_entrega'])) {
                                 echo " (" . htmlspecialchars($pedido['complemento_entrega']) . ")";
                             }
-                            echo " - " . htmlspecialchars($pedido['bairro_entrega']);
+                            if (!empty($pedido['bairro_entrega'])) {
+                                echo " - " . htmlspecialchars($pedido['bairro_entrega']);
+                            }
                             ?>
                         </td>
                         <td>
@@ -98,17 +101,22 @@ ob_start();
                             ?>
                         </td>
                         <td>
-                            <span class="status-<?php echo htmlspecialchars($pedido['status']); ?>">
+                            <!-- A exibição do status já é dinâmica. 
+                                 Se $pedido['status'] for 'finalizado', ele exibirá "Finalizado".
+                                 Certifique-se de que seu CSS tenha uma classe .status-finalizado se quiser um estilo específico.
+                            -->
+                            <span class="status-<?php echo htmlspecialchars(strtolower($pedido['status'])); ?>">
                                 <?php echo htmlspecialchars(ucfirst($pedido['status'])); ?>
                             </span>
                         </td>
                         <td><?php echo date('d/m/Y H:i', strtotime($pedido['data_pedido'])); ?></td>
                         <td>
-                            <a href="detalhes_pedido.php?id=<?php echo $pedido['id']; ?>" class="btn btn-info btn-sm">
+                            <a href="detalhes_pedido.php?id=<?php echo $pedido['id']; ?>" class="btn btn-info btn-sm" title="Ver Detalhes">
                                 <i class="fas fa-eye"></i> Detalhes
                             </a>
                             <a href="excluir_pedido.php?id=<?php echo $pedido['id']; ?>" 
                                class="btn btn-danger btn-sm" 
+                               title="Apagar Pedido"
                                onclick="return confirmarExclusaoPedido(<?php echo $pedido['id']; ?>);">
                                 <i class="fas fa-trash-alt"></i> Apagar
                             </a>
@@ -117,8 +125,9 @@ ob_start();
                     <?php
                 }
             } else {
-                echo '<tr><td colspan="12">Nenhum pedido encontrado.</td></tr>'; 
+                echo '<tr><td colspan="12" style="text-align:center;">Nenhum pedido encontrado.</td></tr>'; 
             }
+            $conn->close(); // Fechar a conexão com o banco de dados
             ?>
         </tbody>
     </table>

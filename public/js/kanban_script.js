@@ -1,6 +1,7 @@
 // public/js/kanban_script.js
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("Kanban JS carregado e DOM pronto.");
     carregarPedidos(); // Carrega os pedidos ao iniciar
 
     // Recarregar os pedidos a cada 10 segundos
@@ -10,51 +11,92 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalOverlay = document.getElementById('modalDetalhesPedido');
     if (modalOverlay) {
         modalOverlay.addEventListener('click', function(event) {
+            // Verifica se o clique foi no overlay e não em um filho (o modal-content)
             if (event.target === modalOverlay) {
+                console.log("Clique no overlay do modal detectado.");
                 fecharModalDetalhes();
             }
         });
+    } else {
+        console.error("Elemento do modal overlay (modalDetalhesPedido) não encontrado no DOM.");
+    }
+
+    // Configurar botões do modal (Aceitar e Cancelar)
+    const modalBtnAceitar = document.getElementById('modalBtnAceitar');
+    const modalBtnCancelar = document.getElementById('modalBtnCancelar');
+
+    if (modalBtnAceitar) {
+        modalBtnAceitar.onclick = function() {
+            if (pedidoIdAtualModal) {
+                // Substitua confirm() por uma UI de confirmação personalizada em produção
+                if (confirm(`Aceitar o pedido #${pedidoIdAtualModal} e iniciar o preparo?`)) {
+                    console.log(`Botão 'Aceitar Pedido' clicado para o pedido ID: ${pedidoIdAtualModal}`);
+                    atualizarStatusPedido(pedidoIdAtualModal, 'preparando', true); // true para fechar modal
+                }
+            } else {
+                console.warn("modalBtnAceitar clicado, mas pedidoIdAtualModal é nulo.");
+            }
+        };
+    } else {
+        console.error("Botão 'modalBtnAceitar' não encontrado no DOM.");
+    }
+
+    if (modalBtnCancelar) {
+        modalBtnCancelar.onclick = function() {
+            if (pedidoIdAtualModal) {
+                // Substitua confirm() por uma UI de confirmação personalizada em produção
+                if (confirm(`Tem certeza que deseja CANCELAR o pedido #${pedidoIdAtualModal}? Esta ação não pode ser desfeita.`)) {
+                    console.log(`Botão 'Cancelar Pedido' clicado para o pedido ID: ${pedidoIdAtualModal}`);
+                    atualizarStatusPedido(pedidoIdAtualModal, 'cancelado', true); // true para fechar modal
+                }
+            } else {
+                console.warn("modalBtnCancelar clicado, mas pedidoIdAtualModal é nulo.");
+            }
+        };
+    } else {
+        console.error("Botão 'modalBtnCancelar' não encontrado no DOM.");
     }
 });
 
 let pedidoIdAtualModal = null; // Variável global para guardar o ID do pedido no modal
 
 async function carregarPedidos() {
+    // console.log("carregarPedidos chamado..."); // Log para verificar o polling
     try {
         const response = await fetch('/pdv/public/api/obter_pedidos_kanban.php'); 
         if (!response.ok) {
-            throw new Error(`Erro HTTP ao buscar pedidos: ${response.status}`);
+            throw new Error(`Erro HTTP ao buscar pedidos do kanban: ${response.status}`);
         }
         const pedidos = await response.json();
 
         if (pedidos.erro) {
-            console.error('Erro retornado pelo backend ao buscar pedidos:', pedidos.mensagem);
+            console.error('Erro retornado pelo backend (obter_pedidos_kanban):', pedidos.mensagem);
             return;
         }
         
         document.querySelectorAll('.cards-container').forEach(container => container.innerHTML = '');
 
         if (pedidos.length === 0) {
-            console.log('Nenhum pedido ativo para exibir no Kanban.');
-            // Você pode adicionar mensagens como:
-            // document.getElementById('container-pendente').innerHTML = '<p class="text-center p-3 text-muted">Nenhum pedido pendente.</p>';
+            // console.log('Nenhum pedido ativo para exibir no Kanban.');
             return;
         }
 
         pedidos.forEach(pedido => {
             const card = criarCardPedido(pedido);
-            const colunaId = `container-${pedido.status.toLowerCase().replace('_', '-')}`;
+            // O ID do container deve corresponder ao status vindo do banco em minúsculas
+            // Ex: se o status for 'finalizado', o ID do container será 'container-finalizado'
+            const colunaId = `container-${pedido.status.toLowerCase()}`; 
             const colunaDestino = document.getElementById(colunaId);
             
             if (colunaDestino) {
                 colunaDestino.appendChild(card);
             } else {
-                console.warn(`Container de cards para status '${pedido.status}' (ID: ${colunaId}) não encontrado.`);
+                 console.warn(`[AVISO] Container de cards para status '${pedido.status}' (ID: ${colunaId}) não encontrado no DOM.`);
             }
         });
 
     } catch (error) {
-        console.error('Falha ao carregar ou processar pedidos:', error);
+        console.error('Falha ao carregar ou processar pedidos do Kanban:', error);
     }
 }
 
@@ -92,33 +134,30 @@ function gerarBotoesAcao(statusAtual, idPedido) {
     let botoesHtml = '';
     if (statusAtual === 'pendente') {
         botoesHtml += `<button onclick="abrirModalDetalhes(${idPedido})" class="btn-detalhes" title="Ver Detalhes do Pedido">Detalhes</button>`;
-        // O botão de aceitar foi movido para o modal, mas pode haver um direto se preferir.
-        // Para manter o fluxo solicitado, o "Aceitar" principal virá do modal.
-        // Se quiser um "Aceitar" rápido aqui, descomente a linha abaixo e ajuste o CSS se necessário:
-        // botoesHtml += `<button onclick="confirmarAceiteRapido(${idPedido})" class="btn-aceitar-card" title="Aceitar e Mover para Preparando">Aceitar Rápido</button>`;
     } else if (statusAtual === 'preparando') {
         botoesHtml += `<button onclick="atualizarStatusPedido(${idPedido}, 'em_entrega')" title="Mover para Em Entrega">P/ Entrega</button>`;
         botoesHtml += `<button onclick="abrirModalDetalhes(${idPedido})" class="btn-detalhes" title="Ver Detalhes do Pedido">Detalhes</button>`;
     } else if (statusAtual === 'em_entrega') {
-        botoesHtml += `<button onclick="atualizarStatusPedido(${idPedido}, 'entregue')" title="Marcar como Entregue">Entregue</button>`;
+        // ALTERADO: Botão "Entregue" agora é "Finalizar" e envia status "finalizado"
+        botoesHtml += `<button onclick="atualizarStatusPedido(${idPedido}, 'finalizado')" title="Marcar como Finalizado">Finalizar</button>`;
         botoesHtml += `<button onclick="abrirModalDetalhes(${idPedido})" class="btn-detalhes" title="Ver Detalhes do Pedido">Detalhes</button>`;
     }
+    // Pedidos com status 'finalizado' ou 'cancelado' não terão botões de ação nesta lógica.
     return botoesHtml;
 }
 
-// Função de aceite rápido (opcional, se quiser um botão direto no card "pendente")
-/*
-function confirmarAceiteRapido(idPedido) {
-    // Implementar uma UI de confirmação personalizada aqui em vez de confirm()
-    if (confirm(`Aceitar o pedido #${idPedido} e mover para preparação?`)) {
-        atualizarStatusPedido(idPedido, 'preparando');
-    }
-}
-*/
 
 async function abrirModalDetalhes(idPedido) {
-    pedidoIdAtualModal = idPedido; // Armazena o ID do pedido para uso nos botões do modal
+    console.log(`[LOG] abrirModalDetalhes chamada para o pedido ID: ${idPedido}`);
+    pedidoIdAtualModal = idPedido; 
     const modal = document.getElementById('modalDetalhesPedido');
+    
+    if (!modal) {
+        console.error("[ERRO] Elemento do modal (modalDetalhesPedido) não encontrado ao tentar abrir.");
+        return;
+    }
+
+    // Selecionar elementos do modal
     const modalPedidoId = document.getElementById('modalPedidoId');
     const modalClienteNome = document.getElementById('modalClienteNome');
     const modalClienteTelefone = document.getElementById('modalClienteTelefone');
@@ -134,95 +173,134 @@ async function abrirModalDetalhes(idPedido) {
     const modalBtnCancelar = document.getElementById('modalBtnCancelar');
 
     // Resetar para "Carregando..."
-    modalPedidoId.textContent = `#${idPedido}`;
-    modalClienteNome.textContent = 'Carregando...';
-    modalClienteTelefone.textContent = 'Carregando...';
-    modalClienteEndereco.textContent = 'Carregando...';
-    modalDataPedido.textContent = 'Carregando...';
-    modalTotalPedido.textContent = 'Carregando...';
-    modalFormaPagamento.textContent = 'Carregando...';
-    modalListaItens.innerHTML = '<li>Carregando...</li>';
-    modalObservacoesPedido.textContent = 'Carregando...';
-    paragrafoTrocoPara.style.display = 'none';
-    modalTrocoPara.textContent = '';
+    if (modalPedidoId) modalPedidoId.textContent = `#${idPedido}`;
+    else console.warn("[AVISO] modalPedidoId não encontrado no DOM.");
+    
+    if (modalClienteNome) modalClienteNome.textContent = 'Carregando...';
+    else console.warn("[AVISO] modalClienteNome não encontrado no DOM.");
+
+    if (modalClienteTelefone) modalClienteTelefone.textContent = 'Carregando...';
+    else console.warn("[AVISO] modalClienteTelefone não encontrado no DOM.");
+
+    if (modalClienteEndereco) modalClienteEndereco.textContent = 'Carregando...';
+    else console.warn("[AVISO] modalClienteEndereco não encontrado no DOM.");
+
+    if (modalDataPedido) modalDataPedido.textContent = 'Carregando...';
+    else console.warn("[AVISO] modalDataPedido não encontrado no DOM.");
+
+    if (modalTotalPedido) modalTotalPedido.textContent = 'Carregando...';
+    else console.warn("[AVISO] modalTotalPedido não encontrado no DOM.");
+
+    if (modalFormaPagamento) modalFormaPagamento.textContent = 'Carregando...';
+    else console.warn("[AVISO] modalFormaPagamento não encontrado no DOM.");
+
+    if (modalListaItens) modalListaItens.innerHTML = '<li>Carregando...</li>';
+    else console.warn("[AVISO] modalListaItens não encontrado no DOM.");
+
+    if (modalObservacoesPedido) modalObservacoesPedido.textContent = 'Carregando...';
+    else console.warn("[AVISO] modalObservacoesPedido não encontrado no DOM.");
+
+    if (paragrafoTrocoPara) paragrafoTrocoPara.style.display = 'none';
+    else console.warn("[AVISO] paragrafoTrocoPara não encontrado no DOM.");
+
+    if (modalTrocoPara) modalTrocoPara.textContent = '';
+    else console.warn("[AVISO] modalTrocoPara não encontrado no DOM.");
 
 
-    modal.classList.add('ativo'); // Adiciona classe para mostrar o modal com transição CSS
+    console.log("[LOG] Adicionando classe 'ativo' ao modal para mostrar.");
+    modal.classList.add('ativo'); 
 
     try {
-        // **PRÓXIMO PASSO: Criar o script /pdv/public/api/obter_detalhes_pedido.php**
-        // Este script PHP deverá buscar todos os detalhes do pedido, incluindo itens e adicionais.
+        console.log(`[LOG] Buscando detalhes para o pedido ID: ${idPedido} via fetch.`);
         const response = await fetch(`/pdv/public/api/obter_detalhes_pedido.php?id=${idPedido}`);
         if (!response.ok) {
-            throw new Error(`Erro HTTP ao buscar detalhes do pedido: ${response.status}`);
+            const errorText = await response.text();
+            console.error(`[ERRO] HTTP ${response.status} ao buscar detalhes: ${errorText}`);
+            throw new Error(`Erro HTTP ${response.status} ao buscar detalhes do pedido: ${errorText}`);
         }
         const detalhes = await response.json();
+        console.log("[LOG] Detalhes recebidos do backend:", detalhes);
 
         if (detalhes.erro) {
-            throw new Error(detalhes.mensagem || 'Erro ao buscar detalhes.');
+            console.error("[ERRO] Backend retornou erro:", detalhes.mensagem);
+            throw new Error(detalhes.mensagem || 'Erro ao buscar detalhes do pedido no backend.');
         }
         
         // Preencher o modal com os dados recebidos
-        modalClienteNome.textContent = escapeHTML(detalhes.nome_cliente || 'N/A');
-        modalClienteTelefone.textContent = escapeHTML(detalhes.telefone_cliente || 'N/A');
+        if (modalClienteNome) modalClienteNome.textContent = escapeHTML(detalhes.nome_cliente || 'N/A');
+        if (modalClienteTelefone) modalClienteTelefone.textContent = escapeHTML(detalhes.telefone_cliente || 'N/A');
         
-        let enderecoCompleto = `${escapeHTML(detalhes.endereco_entrega || '')}, ${escapeHTML(detalhes.numero_entrega || 'S/N')}`;
-        if (detalhes.bairro_entrega) enderecoCompleto += `, ${escapeHTML(detalhes.bairro_entrega)}`;
+        let enderecoCompleto = `${escapeHTML(detalhes.endereco_entrega || '')}`;
+        if(detalhes.numero_entrega && detalhes.numero_entrega.toUpperCase() !== 'S/N' && detalhes.numero_entrega.trim() !== '') {
+            enderecoCompleto += `, ${escapeHTML(detalhes.numero_entrega)}`;
+        } else if (detalhes.numero_entrega) { // Para manter "S/N" se for o caso, ou vazio
+             enderecoCompleto += `, ${escapeHTML(detalhes.numero_entrega)}`;
+        } else {
+            enderecoCompleto += `, S/N`;
+        }
+
+        if (detalhes.bairro_entrega) enderecoCompleto += `, Bairro: ${escapeHTML(detalhes.bairro_entrega)}`;
         if (detalhes.complemento_entrega) enderecoCompleto += ` - ${escapeHTML(detalhes.complemento_entrega)}`;
         if (detalhes.referencia_entrega) enderecoCompleto += ` (Ref: ${escapeHTML(detalhes.referencia_entrega)})`;
-        modalClienteEndereco.textContent = enderecoCompleto;
+        if (modalClienteEndereco) modalClienteEndereco.textContent = enderecoCompleto.startsWith(',') ? enderecoCompleto.substring(1).trim() : enderecoCompleto.trim();
+
 
         const dataPedidoObj = new Date(detalhes.data_pedido);
-        modalDataPedido.textContent = `${dataPedidoObj.toLocaleDateString('pt-BR')} ${dataPedidoObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+        if (modalDataPedido) modalDataPedido.textContent = `${dataPedidoObj.toLocaleDateString('pt-BR')} ${dataPedidoObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
         
-        modalTotalPedido.textContent = `R$ ${parseFloat(detalhes.total_pedido || 0).toFixed(2).replace('.', ',')}`;
-        modalFormaPagamento.textContent = escapeHTML(detalhes.forma_pagamento || 'N/A');
+        if (modalTotalPedido) modalTotalPedido.textContent = `R$ ${parseFloat(detalhes.total_pedido || 0).toFixed(2).replace('.', ',')}`;
+        if (modalFormaPagamento) modalFormaPagamento.textContent = escapeHTML(detalhes.forma_pagamento || 'N/A');
         
-        if (detalhes.troco_para && parseFloat(detalhes.troco_para) > 0) {
-            paragrafoTrocoPara.style.display = 'block';
-            modalTrocoPara.textContent = `R$ ${parseFloat(detalhes.troco_para).toFixed(2).replace('.', ',')}`;
+        if (detalhes.troco_para && parseFloat(detalhes.troco_para) > 0 && detalhes.forma_pagamento && detalhes.forma_pagamento.toLowerCase() === 'dinheiro') {
+            if (paragrafoTrocoPara) paragrafoTrocoPara.style.display = 'block';
+            if (modalTrocoPara) modalTrocoPara.textContent = `R$ ${parseFloat(detalhes.troco_para).toFixed(2).replace('.', ',')}`;
         } else {
-            paragrafoTrocoPara.style.display = 'none';
+            if (paragrafoTrocoPara) paragrafoTrocoPara.style.display = 'none';
         }
 
-        modalObservacoesPedido.textContent = escapeHTML(detalhes.observacoes_pedido || 'Nenhuma.');
+        if (modalObservacoesPedido) modalObservacoesPedido.textContent = escapeHTML(detalhes.observacoes_pedido || 'Nenhuma.');
 
-        if (detalhes.itens && detalhes.itens.length > 0) {
-            modalListaItens.innerHTML = detalhes.itens.map(item => {
-                let htmlItem = `<li>${escapeHTML(item.quantidade)}x ${escapeHTML(item.nome_produto)} - R$ ${parseFloat(item.preco_unitario).toFixed(2).replace('.', ',')}`;
-                if (item.observacao_item) {
-                    htmlItem += `<br><small style="padding-left: 15px;"><em>Obs: ${escapeHTML(item.observacao_item)}</em></small>`;
-                }
-                if (item.adicionais && item.adicionais.length > 0) {
-                    htmlItem += `<br><small style="padding-left: 15px;">Adicionais: ${item.adicionais.map(ad => `${escapeHTML(ad.nome_adicional)} (+R$ ${parseFloat(ad.preco_adicional).toFixed(2).replace('.',',')})`).join(', ')}</small>`;
-                }
-                htmlItem += `</li>`;
-                return htmlItem;
-            }).join('');
-        } else {
-            modalListaItens.innerHTML = '<li>Nenhum item encontrado para este pedido.</li>';
-        }
-
-        // Mostrar/esconder botão de Aceitar dependendo do status atual do pedido
-        if (detalhes.status === 'pendente') {
-            modalBtnAceitar.style.display = 'inline-block';
-            modalBtnCancelar.style.display = 'inline-block'; // Manter cancelar para pendentes
-        } else {
-            modalBtnAceitar.style.display = 'none';
-            // Para outros status, o botão de cancelar pode ou não estar disponível.
-            // Se o pedido já está "preparando", talvez ainda possa cancelar.
-            // Se "em_entrega", "entregue", "cancelado", provavelmente não mostra "cancelar".
-            if (detalhes.status === 'preparando') {
-                 modalBtnCancelar.style.display = 'inline-block';
+        if (modalListaItens) {
+            if (detalhes.itens && detalhes.itens.length > 0) {
+                modalListaItens.innerHTML = detalhes.itens.map(item => {
+                    let htmlItem = `<li>${escapeHTML(item.quantidade)}x ${escapeHTML(item.nome_produto)} - R$ ${parseFloat(item.preco_unitario).toFixed(2).replace('.', ',')}`;
+                    if (item.observacao_item && item.observacao_item.trim() !== '') {
+                        htmlItem += `<br><small style="padding-left: 15px; color: #555;"><em>Obs: ${escapeHTML(item.observacao_item)}</em></small>`;
+                    }
+                    if (item.adicionais && item.adicionais.length > 0) {
+                        htmlItem += `<br><small style="padding-left: 15px; color: #555;">Adicionais: ${item.adicionais.map(ad => `${escapeHTML(ad.nome_adicional)} (+R$ ${parseFloat(ad.preco_adicional).toFixed(2).replace('.',',')})`).join(', ')}</small>`;
+                    }
+                    htmlItem += `</li>`;
+                    return htmlItem;
+                }).join('');
             } else {
-                 modalBtnCancelar.style.display = 'none';
+                modalListaItens.innerHTML = '<li>Nenhum item encontrado para este pedido.</li>';
             }
         }
 
+        // Mostrar/esconder botão de Aceitar/Cancelar dependendo do status atual do pedido
+        if (modalBtnAceitar && modalBtnCancelar) {
+            console.log(`[LOG] Status do pedido para botões do modal: ${detalhes.status}`);
+            if (detalhes.status === 'pendente') {
+                modalBtnAceitar.style.display = 'inline-block';
+                modalBtnCancelar.style.display = 'inline-block'; 
+            } else if (detalhes.status === 'preparando') {
+                modalBtnAceitar.style.display = 'none';
+                modalBtnCancelar.style.display = 'inline-block'; 
+            }
+            else { // Inclui em_entrega, entregue/finalizado, cancelado
+                modalBtnAceitar.style.display = 'none';
+                modalBtnCancelar.style.display = 'none';
+            }
+        } else {
+            console.warn("[AVISO] Botões Aceitar ou Cancelar do modal não encontrados no DOM para definir visibilidade.");
+        }
 
     } catch (error) {
-        console.error("Erro ao carregar detalhes do pedido:", error);
-        modalCorpoDetalhes.innerHTML = `<p class="text-danger">Não foi possível carregar os detalhes do pedido. Tente novamente mais tarde.</p>`;
+        console.error("[ERRO] Erro ao carregar e preencher detalhes do pedido:", error);
+        if (document.getElementById('modalCorpoDetalhes')) { 
+             document.getElementById('modalCorpoDetalhes').innerHTML = `<p style="color: red;">Não foi possível carregar os detalhes do pedido: ${error.message}</p>`;
+        }
     }
 }
 
@@ -231,42 +309,15 @@ function fecharModalDetalhes() {
     const modal = document.getElementById('modalDetalhesPedido');
     if (modal) {
         modal.classList.remove('ativo');
-         // Limpar id para evitar ações acidentais se modal for reaberto rapidamente por outro card
-        pedidoIdAtualModal = null;
+        console.log("[LOG] Modal fechado.");
+        pedidoIdAtualModal = null; 
+    } else {
+        console.warn("[AVISO] Tentativa de fechar modal, mas elemento 'modalDetalhesPedido' não encontrado.");
     }
 }
 
-// Configurar botões do modal (fazemos isso uma vez no DOMContentLoaded)
-document.addEventListener('DOMContentLoaded', function() {
-    const modalBtnAceitar = document.getElementById('modalBtnAceitar');
-    const modalBtnCancelar = document.getElementById('modalBtnCancelar');
-
-    if (modalBtnAceitar) {
-        modalBtnAceitar.onclick = function() {
-            if (pedidoIdAtualModal) {
-                // Implementar uma UI de confirmação personalizada aqui em vez de confirm()
-                if (confirm(`Aceitar o pedido #${pedidoIdAtualModal} e iniciar o preparo?`)) {
-                    atualizarStatusPedido(pedidoIdAtualModal, 'preparando', true); // true para fechar modal
-                }
-            }
-        };
-    }
-
-    if (modalBtnCancelar) {
-        modalBtnCancelar.onclick = function() {
-            if (pedidoIdAtualModal) {
-                 // Implementar uma UI de confirmação personalizada aqui em vez de confirm()
-                if (confirm(`Tem certeza que deseja CANCELAR o pedido #${pedidoIdAtualModal}? Esta ação não pode ser desfeita.`)) {
-                    atualizarStatusPedido(pedidoIdAtualModal, 'cancelado', true); // true para fechar modal
-                }
-            }
-        };
-    }
-});
-
-
 async function atualizarStatusPedido(idPedido, novoStatus, fecharModalAposSucesso = false) {
-    console.log(`Tentando atualizar pedido ${idPedido} para ${novoStatus}`);
+    console.log(`[LOG] Tentando atualizar pedido ${idPedido} para ${novoStatus}`);
     try {
         const response = await fetch('/pdv/public/api/atualizar_status_pedido.php', {
             method: 'POST',
@@ -278,22 +329,24 @@ async function atualizarStatusPedido(idPedido, novoStatus, fecharModalAposSucess
 
         if (!response.ok) {
             const errorData = await response.text();
-            throw new Error(`Erro HTTP ao atualizar status: ${response.status}. Detalhes: ${errorData}`);
+            console.error(`[ERRO] HTTP ${response.status} ao atualizar status: ${errorData}`);
+            throw new Error(`Erro HTTP ${response.status} ao atualizar status: ${errorData}`);
         }
 
         const resultado = await response.json();
+        console.log("[LOG] Resultado da atualização de status:", resultado);
 
         if (resultado.sucesso) {
             carregarPedidos(); 
             if (fecharModalAposSucesso) {
                 fecharModalDetalhes();
             }
-            // alert(resultado.mensagem); // Opcional
         } else {
-            alert('Falha ao atualizar status do pedido: ' + (resultado.mensagem || 'Erro desconhecido.'));
+            console.error("[ERRO] Falha ao atualizar status do pedido (backend):", resultado.mensagem);
+            alert('Falha ao atualizar status do pedido: ' + (resultado.mensagem || 'Erro desconhecido do backend.'));
         }
     } catch (error) {
-        console.error('Erro na função atualizarStatusPedido:', error);
+        console.error('[ERRO] Erro na função atualizarStatusPedido:', error);
         alert('Erro de comunicação ao tentar atualizar o status do pedido. Verifique o console para detalhes.');
     }
 }

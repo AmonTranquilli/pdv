@@ -46,10 +46,11 @@ ob_start();
                 </div>
             </div>
 
-            <div class="kanban-column" id="coluna-entregue" data-status="entregue">
-                <h2><i class="fas fa-check-circle"></i> Entregue</h2> 
-                <div class="cards-container" id="container-entregue">
-                    <!-- Cards de pedidos entregues -->
+            <!-- COLUNA ALTERADA DE "ENTREGUE" PARA "FINALIZADO" -->
+            <div class="kanban-column" id="coluna-finalizado" data-status="finalizado">
+                <h2><i class="fas fa-flag-checkered"></i> Finalizado</h2> 
+                <div class="cards-container" id="container-finalizado">
+                    <!-- Cards de pedidos finalizados -->
                 </div>
             </div>
             
@@ -64,7 +65,7 @@ ob_start();
 </div>
 
 <!-- Modal de Detalhes do Pedido (visibilidade controlada via CSS pela classe 'ativo') -->
-<div id="modalDetalhesPedido" class="modal-overlay"> <!-- REMOVIDO style="display: none;" -->
+<div id="modalDetalhesPedido" class="modal-overlay">
     <div class="modal-content">
         <span class="modal-close-btn" onclick="fecharModalDetalhes()">&times;</span>
         <h2>Detalhes do Pedido: <span id="modalPedidoId"></span></h2>
