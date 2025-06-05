@@ -27,6 +27,7 @@ $nivel_acesso = $_SESSION['nivel_acesso'] ?? 'N/A';
             <li><a href="/pdv/admin/dashboard.php"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
             <li><a href="/pdv/admin/cardapio/index.php"><i class="fas fa-book-open"></i> <span>Gerenciar Cardápio</span></a></li>
             <li><a href="/pdv/admin/pedidos/pedidos.php"><i class="fas fa-clipboard-list"></i> <span>Gerenciar Pedidos</span></a></li>
+            <li><a href="/pdv/admin/gestor_pedidos/index.php"><i class="fas fa-tasks"></i> <span>Gestor de Pedidos</span></a></li> 
             <li><a href="/pdv/admin/categorias/categorias.php"><i class="fas fa-tags"></i> <span>Gerenciar Categorias</span></a></li>
             <li><a href="/pdv/admin/produtos/produtos.php"><i class="fas fa-box-open"></i> <span>Gerenciar Produtos</span></a></li>
             <li><a href="/pdv/admin/adicionais/adicionais.php"><i class="fas fa-plus-circle"></i> <span>Gerenciar Adicionais</span></a></li>
