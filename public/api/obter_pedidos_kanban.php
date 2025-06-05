@@ -53,6 +53,6 @@ if ($result) {
 
 // Fecha a conexão (boa prática)
 $conn->close();
-
+ 
 echo json_encode($pedidos);
 ?>
