@@ -1,0 +1,833 @@
+/* public/css/cardapio.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+/* Regra universal para box-sizing: border-box */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+/* Garante que HTML e Body ocupem 100% da largura e escondam overflow horizontal */
+html, body {
+    width: 100%;
+    overflow-x: hidden; /* Evita rolagem horizontal */
+}
+
+:root {
+    --primary-color: #FF5722; /* Laranja vibrante */
+    --secondary-color: #4CAF50; /* Verde para sucesso/destaque */
+    --text-dark: #333;
+    --text-light: #f8f8f8;
+    --background-light: #ffffff;
+    --background-dark: #f0f2f5;
+    --border-color: #e0e0e0;
+    --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.08);
+    --shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.12);
+    --border-radius-base: 10px;
+    --transition-base: all 0.3s ease-in-out;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-dark);
+    color: var(--text-dark);
+    line-height: 1.6;
+    padding-bottom: 80px; /* Espaço para a barra de navegação inferior */
+}
+
+/* Header principal (top-bar) */
+.top-bar {
+    background-color: var(--primary-color); /* Laranja vibrante */
+    padding: 15px 20px;
+    box-shadow: var(--shadow-medium); /* Sombra mais pronunciada */
+    display: flex;
+    justify-content: center; /* Centraliza o conteúdo interno */
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%; /* Garante que ocupe a largura total */
+    box-sizing: border-box; /* Garante que padding não adicione à largura total */
+}
+
+/* Conteúdo interno da barra superior */
+.top-bar-content {
+    display: flex;
+    justify-content: space-between; /* Alinha nome à esquerda e ícones à direita */
+    align-items: center;
+    width: 100%; /* Garante que ocupe a largura total do pai */
+    max-width: 900px; /* Limita a largura do conteúdo interno */
+    padding: 0 10px; /* Padding interno */
+}
+
+.top-bar .restaurant-name {
+    font-size: 1.6em; /* Ajustado para caber melhor */
+    font-weight: 700;
+    color: var(--text-light); /* Texto branco */
+    text-align: center;
+    flex-grow: 1; /* Permite que o nome ocupe o espaço disponível */
+}
+
+.top-bar .top-bar-icons {
+    display: flex;
+    gap: 0; /* Removido o gap para que o ícone fique no canto */
+    margin-left: auto; /* Empurra os ícones para a direita */
+}
+
+.top-bar .search-icon { /* Apenas o ícone de pesquisa agora */
+    background: none;
+    border: none;
+    font-size: 1.4em; /* Tamanho do ícone ajustado */
+    color: var(--text-light); /* Ícones brancos */
+    cursor: pointer;
+    transition: var(--transition-base);
+    padding: 5px; /* Adiciona um pequeno padding para facilitar o clique */
+}
+
+.top-bar .search-icon:hover {
+    color: rgba(255, 255, 255, 0.8); /* Levemente mais claro no hover */
+    transform: scale(1.1);
+}
+
+/* Nova barra de informações da loja (store-info-bar) */
+.store-info-bar {
+    background-color: #FFFFFF; /* Fundo branco */
+    padding: 10px 20px;
+    box-shadow: var(--shadow-light);
+    display: flex;
+    justify-content: space-around; /* Distribui o espaço entre os itens */
+    align-items: center;
+    flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha em telas pequenas */
+    gap: 10px; /* Adiciona um espaçamento entre os itens flexíveis */
+    font-size: 0.9em;
+    color: #666;
+    border-bottom: 1px solid var(--border-color); /* Linha sutil abaixo */
+    position: sticky;
+    top: 60px; /* Ajuste para ficar abaixo do cabeçalho */
+    z-index: 999;
+    width: 100%;
+    box-sizing: border-box;
+    border-bottom-left-radius: var(--border-radius-base);
+    border-bottom-right-radius: var(--border-radius-base);
+}
+
+.store-info-bar span,
+.store-info-bar a {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--text-dark);
+    text-decoration: none;
+    padding: 2px 5px; /* Pequeno padding para melhor clique/toque */
+    border-radius: 5px;
+    transition: var(--transition-base);
+}
+
+.store-info-bar .store-profile-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.store-info-bar .store-profile-link:hover {
+    color: #E64A19;
+}
+
+/* Estilos para o texto de status (Aberto/Fechado) */
+.store-status-text {
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.store-status-text.aberta {
+    background-color: var(--secondary-color); /* Verde */
+    color: var(--text-light);
+}
+
+.store-status-text.fechada {
+    background-color: #f44336; /* Vermelho */
+    color: var(--text-light);
+}
+
+.min-order-text {
+    background-color: #e0e0e0; /* Cinza claro */
+    padding: 3px 8px;
+    border-radius: 5px;
+}
+
+
+/* Main Content Area */
+.main-content-area {
+    padding: 20px 0 80px 0; /* Padding inferior para a barra de navegação */
+    max-width: 1200px; /* Aumentado para permitir cards maiores */
+    margin: 0 auto;
+}
+
+/* Campo de busca (removido do HTML, mas mantendo a classe caso seja útil no futuro ou para JS) */
+.search-input-container {
+    display: none; /* Oculta completamente o container de busca */
+}
+
+/* Seções de Categorias e Produtos Agrupados */
+.category-section {
+    margin-bottom: 40px;
+    padding: 0 20px;
+}
+
+.category-title {
+    font-size: 2em;
+    color: var(--text-dark);
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+    display: inline-block; /* Para a borda pegar só o texto */
+}
+
+/* GRID DE PRODUTOS - AGORA COM DUAS COLUNAS E IMAGEM À DIREITA */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(550px, 1fr)); /* Aumentado para cards maiores */
+    gap: 20px; /* Espaçamento entre os itens */
+}
+
+.product-card {
+    background-color: var(--background-light);
+    border-radius: var(--border-radius-base);
+    box-shadow: var(--shadow-light);
+    overflow: hidden;
+    display: flex; /* Para alinhar imagem e info lado a lado */
+    flex-direction: row-reverse; /* IMAGEM À DIREITA */
+    padding: 15px; /* Padding interno do item */
+    transition: var(--transition-base);
+    cursor: pointer; /* Indica que é clicável */
+    align-items: flex-start; /* Alinha o conteúdo ao topo */
+    text-align: left; /* Texto alinhado à esquerda */
+}
+
+.product-card:hover {
+    transform: translateY(-3px); /* Efeito menor no hover */
+    box-shadow: var(--shadow-medium);
+}
+
+.product-image {
+    width: 100px; /* Largura fixa para a imagem */
+    height: 100px; /* Altura fixa para a imagem */
+    object-fit: cover;
+    border-radius: var(--border-radius-base); /* Borda arredondada para a imagem */
+    margin-left: 15px; /* Espaço à esquerda da imagem (agora que está à direita) */
+    flex-shrink: 0; /* Evita que a imagem encolha */
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Permite que o info ocupe o espaço restante */
+    padding: 0; /* Remove padding extra, já tem no .product-card */
+    justify-content: space-between; /* Espaço entre nome/descrição e preço/botão */
+    min-width: 0; /* Permite que o conteúdo do info encolha */
+}
+
+.product-name {
+    font-size: 1.2em; /* Tamanho do nome ajustado */
+    font-weight: 600;
+    margin-bottom: 5px; /* Espaçamento menor */
+    color: var(--text-dark);
+    white-space: normal;
+    word-break: break-word;
+}
+
+.product-description {
+    font-size: 0.85em; /* Tamanho da descrição ajustado */
+    color: #666;
+    margin-bottom: 10px; /* Espaçamento ajustado */
+    flex-grow: 1; /* Permite que a descrição ocupe espaço */
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.product-actions { /* Contêiner para preço e botão */
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; /* Alinha o preço e o botão à base */
+    width: 100%;
+    margin-top: 5px; /* Espaço entre descrição e ações */
+}
+
+.product-price {
+    font-size: 1.1em;
+    color: var(--primary-color);
+    font-weight: 700; /* Preço mais negrito */
+    margin-bottom: 0; /* Remove margem inferior padrão */
+    flex-shrink: 0; /* Evita que o preço encolha */
+}
+
+.btn-add-to-cart {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 8px 15px; /* Padding ajustado para botão menor */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em; /* Fonte do botão menor */
+    font-weight: 600;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-light);
+    width: auto; /* Largura automática, não 80% */
+    max-width: 150px; /* Limite de largura para o botão */
+}
+
+.btn-add-to-cart:hover {
+    background-color: #43A047;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.product-card.indisponivel {
+    opacity: 0.6;
+    filter: grayscale(100%);
+    cursor: not-allowed;
+}
+.product-card.indisponivel .btn-add-to-cart {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+.product-card.indisponivel .btn-add-to-cart:hover {
+    background-color: #ccc;
+    transform: none;
+    box-shadow: var(--shadow-light);
+}
+
+/* Barra de Navegação Inferior Fixa (Bottom Nav Bar) */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--background-light);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 1000;
+    border-top-left-radius: var(--border-radius-base);
+    border-top-right-radius: var(--border-radius-base);
+}
+
+.bottom-nav .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #999;
+    font-size: 0.8em;
+    font-weight: 500;
+    transition: var(--transition-base);
+    position: relative;
+    padding: 5px 0; /* Adiciona um pequeno padding para a área de toque */
+    flex: 1; /* Garante que cada item ocupe o mesmo espaço */
+}
+
+.bottom-nav .nav-item i {
+    font-size: 1.5em;
+    margin-bottom: 5px;
+}
+
+.bottom-nav .nav-item.active,
+.bottom-nav .nav-item:hover {
+    color: var(--primary-color);
+}
+
+.bottom-nav .cart-nav-item .cart-count-bottom {
+    position: absolute;
+    top: -5px; /* Ajustado para subir um pouco mais */
+    right: calc(50% - 15px); /* Ajustado para centralizar melhor sobre o ícone */
+    transform: translateX(50%); /* Ajuste fino para centralização */
+    background-color: var(--secondary-color);
+    color: white;
+    font-size: 0.7em;
+    padding: 2px 6px;
+    border-radius: 50%;
+    font-weight: bold;
+    border: 1px solid var(--background-light);
+    min-width: 20px; /* Garante que o círculo não fique muito pequeno */
+    text-align: center; /* Centraliza o número dentro do círculo */
+}
+
+/* Barra de Resumo do Carrinho Flutuante */
+.floating-cart-summary {
+    position: fixed;
+    bottom: 70px; /* Acima da bottom-nav (altura da bottom-nav + 10px de espaçamento) */
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 40px); /* Largura total menos padding lateral */
+    max-width: 500px; /* Limite de largura para desktop */
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 20px;
+    border-radius: var(--border-radius-base);
+    box-shadow: var(--shadow-medium);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 999; /* Abaixo da bottom-nav, mas acima do conteúdo */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.floating-cart-summary.oculto {
+    opacity: 0;
+    pointer-events: none; /* Desativa cliques quando oculto */
+    transform: translateX(-50%) translateY(20px); /* Move para baixo ao ocultar */
+}
+
+.floating-cart-summary .summary-info {
+    display: flex;
+    flex-direction: column;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.floating-cart-summary .summary-info span:first-child {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.floating-cart-summary .btn-view-cart {
+    background-color: white;
+    color: var(--primary-color);
+    padding: 8px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: var(--transition-base);
+    box-shadow: var(--shadow-light);
+}
+
+.floating-cart-summary .btn-view-cart:hover {
+    background-color: #f0f0f0;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+
+/* Modais (Carrinho e Detalhes do Produto) */
+.carrinho-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.carrinho-modal.oculto {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Desativa interações quando oculto */
+}
+
+.carrinho-conteudo {
+    background-color: var(--background-light);
+    padding: 30px;
+    border-radius: var(--border-radius-base);
+    box-shadow: var(--shadow-medium);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+}
+.carrinho-modal.oculto .carrinho-conteudo {
+    transform: translateY(20px);
+}
+
+.carrinho-conteudo h2 {
+    text-align: center;
+    color: var(--text-dark);
+    margin-bottom: 25px;
+    font-size: 1.8em;
+}
+
+.carrinho-conteudo ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.carrinho-conteudo ul li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border-color);
+    font-size: 1.1em;
+    color: #555;
+}
+.carrinho-conteudo ul li:last-child {
+    border-bottom: none;
+}
+
+.carrinho-conteudo ul li span:first-child {
+    flex-grow: 1;
+}
+.carrinho-conteudo ul li span:last-child {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.carrinho-conteudo p {
+    text-align: right;
+    font-size: 1.4em;
+    font-weight: bold;
+    margin-top: 20px;
+    color: var(--text-dark);
+}
+
+.carrinho-conteudo p span {
+    color: var(--secondary-color);
+}
+
+.carrinho-conteudo button#fechar-carrinho,
+.btn-ver-carrinho-modal {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    transition: var(--transition-base);
+    margin-top: 15px;
+    text-align: center;
+    text-decoration: none; /* Para o link */
+}
+
+.carrinho-conteudo button#fechar-carrinho {
+    background-color: #ccc;
+    color: var(--text-dark);
+}
+.carrinho-conteudo button#fechar-carrinho:hover {
+    background-color: #bbb;
+}
+
+.btn-ver-carrinho-modal {
+    background-color: var(--primary-color);
+    color: white;
+}
+.btn-ver-carrinho-modal:hover {
+    background-color: #E64A19;
+}
+
+
+/* Modal de Detalhes do Produto */
+.card-produto {
+    background-color: var(--background-light);
+    padding: 25px;
+    border-radius: var(--border-radius-base);
+    box-shadow: var(--shadow-medium);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    text-align: center;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+}
+.carrinho-modal.oculto .card-produto {
+    transform: translateY(20px);
+}
+
+.btn-fechar {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.8em;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.btn-fechar:hover {
+    color: #666;
+}
+
+.img-produto-modal {
+    width: 100%;
+    max-height: 250px;
+    object-fit: cover;
+    border-radius: var(--border-radius-base);
+    margin-bottom: 20px;
+}
+
+.info-produto {
+    text-align: left;
+}
+
+.info-produto h2 {
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: var(--text-dark);
+    text-align: left;
+}
+
+.descricao-produto {
+    font-size: 1em;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.input-observacoes {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1em;
+    resize: vertical;
+    min-height: 60px;
+    margin-bottom: 20px;
+}
+
+.area-adicionais {
+    margin-bottom: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+.area-adicionais h3 {
+    font-size: 1.2em;
+    color: var(--text-dark);
+    margin-bottom: 15px;
+}
+.adicional-item {
+    margin-bottom: 8px;
+}
+.adicional-item label {
+    display: flex;
+    align-items: center;
+    font-size: 1em;
+    color: #555;
+    cursor: pointer;
+}
+.adicional-item input[type="checkbox"] {
+    margin-right: 10px;
+    transform: scale(1.1);
+    accent-color: var(--primary-color); /* Cor do checkbox */
+}
+
+
+.controle-quantidade {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    margin-bottom: 25px;
+}
+
+.controle-quantidade button {
+    background-color: var(--background-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.5em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.controle-quantidade button:hover {
+    background-color: #e5e5e5;
+    border-color: var(--primary-color);
+}
+
+.controle-quantidade span {
+    font-size: 1.8em;
+    font-weight: 600;
+    color: var(--text-dark);
+    min-width: 30px;
+    text-align: center;
+}
+
+.btn-confirmar {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: 600;
+    transition: var(--transition-base);
+    width: 100%;
+    box-shadow: var(--shadow-light);
+}
+
+.btn-confirmar:hover {
+    background-color: #E64A19;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .top-bar .restaurant-name {
+        font-size: 1.3em; /* Ajustado para mobile */
+    }
+    .top-bar .search-icon { /* Apenas o ícone de pesquisa agora */
+        font-size: 1.2em; /* Ajustado para mobile */
+    }
+
+    .store-info-bar {
+        padding: 8px 10px; /* Reduz o padding em telas menores */
+        font-size: 0.75em; /* Reduz o tamanho da fonte para caber mais */
+        gap: 5px; /* Reduz o gap entre os itens */
+    }
+
+    .store-info-bar span {
+        white-space: normal; /* Permite que o texto quebre a linha em telas pequenas */
+        text-align: center; /* Centraliza o texto se ele quebrar */
+        flex-basis: auto; /* Permite que o item ocupe o espaço necessário */
+        min-width: unset; /* Garante que não haja largura mínima que impeça o encolhimento */
+    }
+
+    .main-content-area {
+        padding: 15px 10px 80px 10px; /* Reduzido padding lateral */
+        width: 100%; /* Garante que ocupe a largura total */
+        max-width: 100%; /* Garante que não exceda a largura da viewport */
+    }
+
+    /* Ocultar o container de busca para mobile */
+    .search-input-container {
+        display: none;
+    }
+
+    .category-section {
+        padding: 0; /* Removido padding, agora controlado pelo main-content-area */
+        margin-bottom: 30px;
+    }
+    .category-title {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
+
+    .products-grid { /* Em mobile, volta para uma coluna */
+        grid-template-columns: 1fr;
+        gap: 10px; /* Reduzido o espaçamento entre os itens */
+    }
+    .product-card { /* O produto individual, agora como um item de lista */
+        padding: 10px; /* Reduzido o padding interno do item */
+        min-width: 0; /* Permite que o card encolha */
+        flex-direction: row-reverse; /* IMAGEM À DIREITA também em mobile */
+    }
+    .product-image {
+        width: 80px; /* Largura menor da imagem em mobile */
+        height: 80px;
+        margin-left: 10px; /* Espaço menor */
+    }
+    .product-info {
+        padding: 0; /* Já tem padding no product-card */
+        min-width: 0; /* Permite que o conteúdo do info encolha */
+    }
+    .product-name {
+        font-size: 1em; /* Fonte do nome menor */
+        margin-bottom: 3px; /* Margem ajustada */
+    }
+    .product-description {
+        font-size: 0.75em; /* Fonte da descrição menor */
+        margin-bottom: 8px; /* Margem ajustada */
+    }
+    .product-price {
+        font-size: 0.9em; /* Fonte do preço menor */
+        margin-bottom: 0; /* Remove margem inferior padrão */
+    }
+    .btn-add-to-cart {
+        padding: 6px 12px; /* Padding ajustado */
+        font-size: 0.8em; /* Fonte do botão menor */
+        max-width: 120px;
+    }
+
+    .bottom-nav {
+        padding: 8px 0; /* Padding da nav bar ajustado */
+    }
+    .bottom-nav .nav-item {
+        font-size: 0.7em;
+    }
+    .bottom-nav .nav-item i {
+        font-size: 1.2em;
+    }
+    .bottom-nav .cart-nav-item .cart-count-bottom {
+        /* Ajustes para mobile */
+        top: -2px; /* Move para cima */
+        right: 15px; /* Posiciona mais à direita do item */
+        transform: none; /* Remove a transformação que estava causando o deslocamento */
+        min-width: 16px; /* Ajuste para mobile */
+    }
+
+    .floating-cart-summary {
+        bottom: 65px; /* Ajustado para ficar um pouco mais alto */
+        width: calc(100% - 20px); /* Ajuste para mobile, menos padding total */
+        padding: 10px 15px; /* Padding reduzido */
+        border-radius: 8px; /* Borda um pouco menos arredondada */
+    }
+    .floating-cart-summary .summary-info {
+        font-size: 0.9em; /* Fonte menor */
+    }
+    .floating-cart-summary .summary-info span:first-child {
+        font-size: 0.75em; /* Fonte menor */
+    }
+    .floating-cart-summary .btn-view-cart {
+        padding: 6px 10px; /* Padding reduzido */
+        font-size: 0.8em; /* Fonte menor */
+    }
+
+
+    .carrinho-conteudo,
+    .card-produto {
+        padding: 20px;
+        width: 95%;
+    }
+    .carrinho-conteudo h2,
+    .info-produto h2 {
+        font-size: 1.5em;
+    }
+    .carrinho-conteudo ul li,
+    .descricao-produto,
+    .input-observacoes,
+    .area-adicionais label,
+    .controle-quantidade span {
+        font-size: 0.9em;
+    }
+    .controle-quantidade button {
+        width: 35px;
+        height: 35px;
+        font-size: 1.2em;
+    }
+    .btn-confirmar,
+    .carrinho-conteudo button#fechar-carrinho,
+    .btn-ver-carrinho-modal {
+        padding: 10px;
+        font-size: 1em;
+    }
+}
