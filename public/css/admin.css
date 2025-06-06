@@ -821,4 +821,28 @@ table tr:hover {background-color: #eef2f5;} /* Hover mais suave */
 .modal-close-button:hover {
     background-color: #ea580c; /* hover:bg-orange-600 */
 }
+.filter-form {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.filter-form label {
+    font-weight: bold;
+}
+.filter-form input[type="date"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.filter-info {
+    font-style: italic;
+    color: #555;
+    margin-bottom: 15px;
+}
+
 }

@@ -4,20 +4,91 @@ session_start();
 require_once '../../includes/conexao.php'; // Caminho para a conexão
 
 // 1. Verifica se o usuário está logado
-// Ajuste esta lógica conforme o seu sistema de autenticação.
-// O exemplo abaixo verifica uma variável de sessão 'logado'.
 if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
-    // Redireciona para a página de login do admin (ajustado para subir 2 níveis)
     header("Location: ../login.php"); 
     exit();
 }
+
+// --- LÓGICA DO FILTRO DE DATA MELHORADA ---
+$data_hoje = date('Y-m-d'); // Obtém a data de hoje no formato YYYY-MM-DD
+
+// Se nenhum filtro de data for aplicado, assume a data de hoje por defeito.
+$data_filtro = isset($_GET['data_filtro']) ? $_GET['data_filtro'] : $data_hoje;
+
+$sql_where = "";
+$params = [];
+$types = "";
+
+// Valida se a data está num formato correto (YYYY-MM-DD) e aplica o filtro
+if (!empty($data_filtro) && preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $data_filtro)) {
+    $sql_where = " WHERE DATE(data_pedido) = ?";
+    $params[] = $data_filtro;
+    $types .= "s"; // 's' para string
+} else {
+    // Se a data for inválida ou vazia (ao clicar em "Ver Todos"), não aplica nenhum filtro de data
+    $data_filtro = ''; 
+}
+// --- FIM DA LÓGICA DO FILTRO ---
 
 // Inicia o buffer de saída para incluir o conteúdo no template
 ob_start();
 ?>
 
+<!-- Estilos específicos para esta página -->
+<style>
+    .header-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    .header-controls h1 {
+        margin: 0;
+    }
+    .filter-form .date-filter-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .filter-form label {
+        display: none; /* Oculta o label "Filtrar por data" para um visual mais limpo */
+    }
+    .filter-form input[type="date"] {
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 0.9rem;
+    }
+    /* Estilos dos botões já devem vir do admin.css, mas podemos garantir aqui */
+    .filter-form .btn {
+        padding: 8px 12px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        border-radius: 5px;
+        cursor: pointer;
+        border: none;
+        color: white;
+        display: inline-block;
+    }
+    .filter-form .btn-primary { background-color: #007bff; }
+    .filter-form .btn-info { background-color: #17a2b8; }
+    .filter-form .btn-secondary { background-color: #6c757d; }
+</style>
+
 <div class="container">
-    <h1>Lista de Pedidos</h1>
+    <div class="header-controls">
+        <h1><i class="fas fa-list-alt"></i> Lista de Pedidos</h1>
+        
+        <!-- Formulário de Filtro por Data com novo estilo -->
+        <form action="pedidos.php" method="GET" class="filter-form">
+            <div class="date-filter-group">
+                <label for="data_filtro">Filtrar por data:</label>
+                <input type="date" id="data_filtro" name="data_filtro" value="<?php echo htmlspecialchars($data_filtro); ?>" onchange="this.form.submit()">
+                <a href="pedidos.php?data_filtro=<?php echo $data_hoje; ?>" class="btn btn-info">Hoje</a>
+                <a href="pedidos.php?data_filtro=" class="btn btn-secondary">Ver Todos</a>
+            </div>
+        </form>
+    </div>
 
     <div class="message-area">
         <?php
@@ -32,6 +103,12 @@ ob_start();
         }
         ?>
     </div>
+
+    <?php if (!empty($data_filtro)): ?>
+        <p class="filter-info">Mostrando pedidos para o dia: <strong><?php echo date('d/m/Y', strtotime($data_filtro)); ?></strong></p>
+    <?php else: ?>
+        <p class="filter-info">Mostrando todos os pedidos.</p>
+    <?php endif; ?>
 
     <table class="data-table">
         <thead>
@@ -52,9 +129,18 @@ ob_start();
         </thead>
         <tbody>
             <?php
-            // Consulta para buscar os pedidos
-            $sql = "SELECT id, id_cliente, nome_cliente, telefone_cliente, endereco_entrega, numero_entrega, bairro_entrega, complemento_entrega, referencia_entrega, data_pedido, total_pedido, forma_pagamento, troco_para, troco, status FROM pedidos ORDER BY data_pedido DESC";
-            $result = $conn->query($sql);
+            // Consulta para buscar os pedidos, agora com o filtro
+            $sql = "SELECT id, id_cliente, nome_cliente, telefone_cliente, endereco_entrega, numero_entrega, bairro_entrega, complemento_entrega, referencia_entrega, data_pedido, total_pedido, forma_pagamento, troco_para, troco, status FROM pedidos" . $sql_where . " ORDER BY data_pedido DESC";
+            
+            $stmt = $conn->prepare($sql);
+
+            // Binda os parâmetros se houver filtro
+            if (!empty($params)) {
+                $stmt->bind_param($types, ...$params);
+            }
+            
+            $stmt->execute();
+            $result = $stmt->get_result();
 
             if ($result && $result->num_rows > 0) {
                 while ($pedido = $result->fetch_assoc()) {
@@ -101,10 +187,6 @@ ob_start();
                             ?>
                         </td>
                         <td>
-                            <!-- A exibição do status já é dinâmica. 
-                                 Se $pedido['status'] for 'finalizado', ele exibirá "Finalizado".
-                                 Certifique-se de que seu CSS tenha uma classe .status-finalizado se quiser um estilo específico.
-                            -->
                             <span class="status-<?php echo htmlspecialchars(strtolower($pedido['status'])); ?>">
                                 <?php echo htmlspecialchars(ucfirst($pedido['status'])); ?>
                             </span>
@@ -125,9 +207,14 @@ ob_start();
                     <?php
                 }
             } else {
-                echo '<tr><td colspan="12" style="text-align:center;">Nenhum pedido encontrado.</td></tr>'; 
+                 if (!empty($data_filtro)) {
+                    echo '<tr><td colspan="12" style="text-align:center;">Nenhum pedido encontrado para a data selecionada.</td></tr>'; 
+                 } else {
+                    echo '<tr><td colspan="12" style="text-align:center;">Nenhum pedido encontrado.</td></tr>';
+                 }
             }
-            $conn->close(); // Fechar a conexão com o banco de dados
+            $stmt->close();
+            $conn->close();
             ?>
         </tbody>
     </table>
@@ -138,6 +225,5 @@ ob_start();
 $page_content = ob_get_clean();
 
 // Inclui o template principal do painel administrativo.
-// Ajustado para o caminho: sobe um nível para 'admin' e lá encontra o template.
 include '../template_admin.php'; 
 ?>
