@@ -69,7 +69,6 @@ ob_start();
     </div>
 </div>
 
-<!-- NOVO MODAL PARA NOTIFICAÇÕES E CONFIRMAÇÕES -->
 <div id="notificationModal" class="modal-overlay">
     <div class="modal-content notification-modal">
         <h2 id="notificationTitle">Aviso</h2>
@@ -87,6 +86,6 @@ ob_start();
 </script>
 
 <?php
-$page_content = ob_get_clean();
+$page_cont ent = ob_get_clean();
 include '../template_admin.php'; 
 ?>

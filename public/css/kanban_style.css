@@ -10,13 +10,13 @@ body.kanban-page-active {
 }
 
 .kanban-page-header {
-    max-width: 95%; /* Ocupa mais espaço da tela */
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
+    max-width: none;
     margin-top: 20px;
     margin-bottom: 30px;
     padding-bottom: 20px;
     border-bottom: 1px solid #dee2e6; 
+    box-sizing: border-box;
 }
 
 .kanban-page-header h1 {
@@ -32,7 +32,7 @@ body.kanban-page-active {
 }
 
 .admin-container-gestor {
-    padding: 0 20px; /* Padding lateral no container principal */
+    padding: 0 20px;
     box-sizing: border-box;
 }
 
@@ -44,9 +44,9 @@ body.kanban-page-active {
 }
 
 .kanban-board {
-    display: grid; /* ALTERADO para Grid Layout */
-    grid-template-columns: repeat(5, 1fr); /* Cria 5 colunas de largura igual */
-    gap: 20px; /* Espaçamento entre as colunas */
+    display: grid;
+    grid-template-columns: repeat(5, minmax(200px, 1fr));
+    gap: 20px;
     padding: 20px; 
     min-height: 70vh;
     background-color: #e9ecef; 
@@ -60,10 +60,10 @@ body.kanban-page-active {
     background-color: #dde1e6; 
     border-radius: 10px;
     padding: 15px;
-    display: flex; /* Manter flex aqui para alinhar o conteúdo interno da coluna */
+    display: flex;
     flex-direction: column;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    min-width: 200px; /* Largura mínima para evitar que a coluna fique muito estreita */
+    min-width: 0;
 }
 
 .kanban-column h2 {
@@ -85,7 +85,6 @@ body.kanban-page-active {
 .kanban-column h2 .fas {
     margin-right: 8px;
 }
-
 
 .cards-container {
     flex-grow: 1;
@@ -174,203 +173,125 @@ body.kanban-page-active {
     border-color: #bbb;
 }
 
-/* Modal continua o mesmo da versão anterior */
+/* --- ESTILOS PARA TODOS OS MODAIS --- */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.65);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1050;
-    opacity: 0;
-    visibility: hidden;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1040;
 }
 .modal-overlay.ativo {
-    opacity: 1;
-    visibility: visible;
+    opacity: 1; visibility: visible;
 }
-
 .modal-content {
-    background-color: #fff;
-    padding: 30px;
-    border-radius: 10px;
+    background-color: #fff; padding: 30px; border-radius: 10px;
     box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    width: 90%;
-    max-width: 650px;
-    position: relative;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    transform: scale(0.95);
-    transition: transform 0.3s ease;
+    width: 90%; position: relative; max-height: 90vh;
+    display: flex; flex-direction: column;
+    transform: scale(0.95); transition: transform 0.3s ease;
 }
 .modal-overlay.ativo .modal-content {
     transform: scale(1);
 }
-
 .modal-close-btn {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 30px;
-    font-weight: bold;
-    color: #aaa;
-    cursor: pointer;
-    line-height: 1;
-    transition: color 0.2s ease;
+    position: absolute; top: 15px; right: 20px; font-size: 30px;
+    font-weight: bold; color: #aaa; cursor: pointer;
+    line-height: 1; transition: color 0.2s ease;
 }
-.modal-close-btn:hover {
-    color: #333;
-}
-
+.modal-close-btn:hover { color: #333; }
 .modal-content h2 {
-    margin-top: 0;
-    margin-bottom: 25px;
-    color: #333;
-    font-size: 1.7em;
-    border-bottom: 1px solid #e9ecef;
-    padding-bottom: 15px;
+    margin-top: 0; margin-bottom: 25px; color: #333; font-size: 1.7em;
+    border-bottom: 1px solid #e9ecef; padding-bottom: 15px;
 }
-
-#modalCorpoDetalhes {
-    margin-bottom: 25px;
-    overflow-y: auto;
-    padding-right: 15px;
-    flex-grow: 1;
-}
-#modalCorpoDetalhes p {
-    margin-bottom: 12px;
-    line-height: 1.65;
-    color: #555;
-}
-#modalCorpoDetalhes p strong {
-    color: #212529;
-    min-width: 150px;
-    display: inline-block;
-}
-#modalCorpoDetalhes ul {
-    list-style-type: none;
-    padding-left: 0;
-}
-#modalCorpoDetalhes ul li {
-    margin-bottom: 6px;
-    padding: 5px;
-    border-bottom: 1px dashed #f1f1f1;
-}
-#modalCorpoDetalhes ul li:last-child {
-    border-bottom: none;
-}
-
 .modal-actions {
-    text-align: right;
-    padding-top: 20px;
-    border-top: 1px solid #e9ecef;
-    margin-top: auto;
-    flex-shrink: 0;
+    text-align: right; padding-top: 20px; border-top: 1px solid #e9ecef;
+    margin-top: auto; flex-shrink: 0;
 }
-
 .modal-actions button {
-    padding: 12px 20px;
-    font-size: 1em;
-    border-radius: 5px;
-    cursor: pointer;
-    margin-left: 12px;
-    border: none;
-    font-weight: 500;
+    padding: 12px 20px; font-size: 1em; border-radius: 5px; cursor: pointer;
+    margin-left: 12px; border: none; font-weight: 500;
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
-.modal-actions button:active {
-    transform: scale(0.97);
-}
+.modal-actions button:active { transform: scale(0.97); }
+.modal-actions .btn-aceitar { background-color: #28a745; color: white; }
+.modal-actions .btn-aceitar:hover { background-color: #218838; }
+.modal-actions .btn-cancelar, .modal-actions .btn-secondary { background-color: #6c757d; color: white; }
+.modal-actions .btn-cancelar:hover, .modal-actions .btn-secondary:hover { background-color: #5a6268; }
 
-.modal-actions .btn-aceitar {
-    background-color: #28a745;
-    color: white;
-}
-.modal-actions .btn-aceitar:hover {
-    background-color: #218838;
-}
+/* Modal de Detalhes */
+#modalDetalhesPedido { z-index: 1050; }
+#modalDetalhesPedido .modal-content { max-width: 650px; }
+#modalCorpoDetalhes { margin-bottom: 25px; overflow-y: auto; padding-right: 15px; flex-grow: 1; }
+#modalCorpoDetalhes p { margin-bottom: 12px; line-height: 1.65; color: #555; }
+#modalCorpoDetalhes p strong { color: #212529; min-width: 150px; display: inline-block; }
+#modalCorpoDetalhes ul { list-style-type: none; padding-left: 0; }
+#modalCorpoDetalhes ul li { margin-bottom: 6px; padding: 5px; border-bottom: 1px dashed #f1f1f1; }
+#modalCorpoDetalhes ul li:last-child { border-bottom: none; }
 
-.modal-actions .btn-cancelar {
-    background-color: #dc3545;
-    color: white;
+/* Modal de Notificação */
+#notificationModal { z-index: 1100; }
+.notification-modal { max-width: 480px; text-align: center; }
+.notification-modal #notificationTitle { font-size: 1.6em; margin-bottom: 15px; border-bottom: none; padding-bottom: 0; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.notification-modal #notificationMessage { font-size: 1.1em; line-height: 1.6; color: #555; margin-bottom: 25px; }
+.notification-modal #notificationActions { justify-content: center; }
+.notification-modal #notificationActions button { min-width: 110px; }
+.notification-modal.success #notificationTitle { color: #28a745; }
+.notification-modal.error #notificationTitle { color: #dc3545; }
+.notification-modal.info #notificationTitle { color: #007bff; }
+.notification-modal.confirm #notificationTitle { color: #fd7e14; }
+
+/* --- NOVOS ESTILOS PARA O MODAL DO ENTREGADOR --- */
+#modalEntregador { z-index: 1060; }
+.entregador-modal { max-width: 500px; text-align: center; }
+.entregador-modal h2 { font-size: 1.6em; }
+.entregador-modal p { margin-bottom: 20px; color: #555; }
+.entregador-modal .form-group { margin-bottom: 15px; text-align: left; }
+.entregador-modal .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+.entregador-modal .form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1.1em;
+    box-sizing: border-box;
+    text-align: center;
+    text-transform: uppercase;
 }
-.modal-actions .btn-cancelar:hover {
-    background-color: #c82333;
-}
+#entregadorError { margin-top: 15px; }
+/* --- FIM DOS NOVOS ESTILOS --- */
+
 
 /* Scrollbars WebKit */
-.cards-container::-webkit-scrollbar,
-#modalCorpoDetalhes::-webkit-scrollbar,
-.kanban-board::-webkit-scrollbar { 
-    height: 10px; 
-    width: 8px;   
-}
-
-.cards-container::-webkit-scrollbar-track,
-#modalCorpoDetalhes::-webkit-scrollbar-track,
-.kanban-board::-webkit-scrollbar-track {
-    background: rgba(0,0,0,0.05); 
-    border-radius: 10px;
-}
-
-.cards-container::-webkit-scrollbar-thumb,
-#modalCorpoDetalhes::-webkit-scrollbar-thumb,
-.kanban-board::-webkit-scrollbar-thumb {
-    background: #bdc3c7; 
-    border-radius: 10px;
-}
-
-.cards-container::-webkit-scrollbar-thumb:hover,
-#modalCorpoDetalhes::-webkit-scrollbar-thumb:hover,
-.kanban-board::-webkit-scrollbar-thumb:hover {
-    background: #95a5a6; 
-}
+.cards-container::-webkit-scrollbar, #modalCorpoDetalhes::-webkit-scrollbar,
+.kanban-board::-webkit-scrollbar { height: 10px; width: 8px; }
+.cards-container::-webkit-scrollbar-track, #modalCorpoDetalhes::-webkit-scrollbar-track,
+.kanban-board::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
+.cards-container::-webkit-scrollbar-thumb, #modalCorpoDetalhes::-webkit-scrollbar-thumb,
+.kanban-board::-webkit-scrollbar-thumb { background: #bdc3c7; border-radius: 10px; }
+.cards-container::-webkit-scrollbar-thumb:hover, #modalCorpoDetalhes::-webkit-scrollbar-thumb:hover,
+.kanban-board::-webkit-scrollbar-thumb:hover { background: #95a5a6; }
 
 /* Responsividade */
-@media (max-width: 1200px) { /* Ponto de quebra para telas menores */
+@media (max-width: 1300px) {
     .kanban-board {
-        /* Volta ao layout de flex com scroll horizontal */
         display: flex;
         overflow-x: auto; 
-        justify-content: flex-start; /* Alinha colunas à esquerda quando houver scroll */
+        justify-content: flex-start;
     }
      .kanban-column {
-        width: 280px; /* Largura fixa quando há scroll */
-        flex-shrink: 0; /* Para não encolher quando o board tem scroll */
+        width: 280px;
+        flex-shrink: 0;
+        min-width: 260px;
     }
 }
-
 @media (max-width: 768px) {
-    .admin-container-gestor {
-        padding: 0 10px;
-    }
-    .kanban-page-header h1 {
-        font-size: 1.5em; 
-    }
-    .kanban-board {
-        padding: 10px; 
-        gap: 10px;
-    }
-    .kanban-column {
-        width: 260px; /* Colunas um pouco mais estreitas para mobile */
-        min-width: 240px;
-    }
-    .modal-content {
-        padding: 20px;
-        max-height: 95vh;
-    }
-    .modal-content h2 {
-        font-size: 1.4em;
-    }
-    #modalCorpoDetalhes p strong {
-        min-width: auto;
-        display: block;
-        margin-bottom: 3px;
-    }
+    .admin-container-gestor { padding: 0 10px; }
+    .kanban-page-header h1 { font-size: 1.5em; }
+    .kanban-board { padding: 10px; gap: 10px; }
+    .kanban-column { width: 260px; min-width: 240px; }
+    .modal-content { padding: 20px; max-height: 95vh; }
+    .modal-content h2 { font-size: 1.4em; }
+    #modalCorpoDetalhes p strong { min-width: auto; display: block; margin-bottom: 3px; }
 }
