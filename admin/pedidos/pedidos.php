@@ -1,7 +1,10 @@
 <?php
 session_start();
 // Caminho para a conexão, ajustado para dentro de 'admin/pedidos'
-require_once '../../includes/conexao.php'; // Caminho para a conexão
+require_once '../../includes/conexao.php'; 
+
+// --- CORREÇÃO: Define o fuso horário para o Brasil ---
+date_default_timezone_set('America/Sao_Paulo');
 
 // 1. Verifica se o usuário está logado
 if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
@@ -10,7 +13,7 @@ if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
 }
 
 // --- LÓGICA DO FILTRO DE DATA MELHORADA ---
-$data_hoje = date('Y-m-d'); // Obtém a data de hoje no formato YYYY-MM-DD
+$data_hoje = date('Y-m-d'); // Agora obtém a data correta
 
 // Se nenhum filtro de data for aplicado, assume a data de hoje por defeito.
 $data_filtro = isset($_GET['data_filtro']) ? $_GET['data_filtro'] : $data_hoje;

@@ -78,6 +78,25 @@ ob_start();
     </div>
 </div>
 
+<div id="modalEntregador" class="modal-overlay">
+    <div class="modal-content entregador-modal">
+        <span class="modal-close-btn" onclick="fecharModalEntregador()">&times;</span>
+        <h2>Finalizar Entrega</h2>
+        <p>Para finalizar o pedido <strong id="entregadorModalPedidoId">#0</strong>, por favor, selecione o entregador.</p>
+        <div class="form-group">
+            <label for="entregadorSelect">Entregador:</label>
+            <select id="entregadorSelect" name="id_entregador" class="form-control">
+                <option value="">A carregar...</option>
+            </select>
+        </div>
+        <div id="entregadorError" class="mensagem erro" style="display: none;"></div>
+        <div class="modal-actions">
+            <button id="btnConfirmarFinalizacao" class="btn-aceitar">Confirmar Finalização</button>
+            <button onclick="fecharModalEntregador()" class="btn-secondary">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <script src="<?php echo htmlspecialchars($baseUrl); ?>/js/kanban_script.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -86,6 +105,6 @@ ob_start();
 </script>
 
 <?php
-$page_cont ent = ob_get_clean();
+$page_content = ob_get_clean();
 include '../template_admin.php'; 
 ?>

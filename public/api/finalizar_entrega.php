@@ -11,33 +11,31 @@ if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
 $input = json_decode(file_get_contents('php://input'), true);
 
 $idPedido = isset($input['id_pedido']) ? intval($input['id_pedido']) : null;
-$codigoEntregador = isset($input['codigo_entregador']) ? trim(strtoupper($input['codigo_entregador'])) : null;
+// CORRIGIDO: Agora espera 'id_entregador' em vez de 'codigo_entregador'
+$idEntregador = isset($input['id_entregador']) ? intval($input['id_entregador']) : null;
 
-if (!$idPedido || !$codigoEntregador) {
-    echo json_encode(['sucesso' => false, 'mensagem' => 'Dados incompletos. ID do pedido e código do entregador são necessários.']);
+if (!$idPedido || !$idEntregador) {
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Dados incompletos. Por favor, selecione um entregador.']);
     exit;
 }
 
 try {
     $conn->begin_transaction();
     
-    // 1. Validar o código do entregador e obter o ID
-    $stmt_entregador = $conn->prepare("SELECT id FROM entregadores WHERE codigo_entregador = ? AND ativo = 1");
+    // 1. Apenas verifica se o ID do entregador é válido e se ele está ativo
+    $stmt_entregador = $conn->prepare("SELECT id FROM entregadores WHERE id = ? AND ativo = 1");
     if (!$stmt_entregador) throw new Exception("Erro ao preparar a busca do entregador: " . $conn->error);
     
-    $stmt_entregador->bind_param("s", $codigoEntregador);
+    $stmt_entregador->bind_param("i", $idEntregador);
     $stmt_entregador->execute();
     $result_entregador = $stmt_entregador->get_result();
     
     if ($result_entregador->num_rows === 0) {
-        throw new Exception("Código de entregador inválido ou o entregador está inativo.");
+        throw new Exception("Entregador não encontrado ou está inativo.");
     }
-    
-    $entregador = $result_entregador->fetch_assoc();
-    $idEntregador = $entregador['id'];
     $stmt_entregador->close();
 
-    // 2. Atualizar o pedido para 'finalizado' e associar o entregador
+    // 2. Atualiza o pedido para 'finalizado' e associa o ID do entregador
     $stmt_update_pedido = $conn->prepare("UPDATE pedidos SET status = 'finalizado', id_entregador = ? WHERE id = ? AND status = 'em_entrega'");
     if (!$stmt_update_pedido) throw new Exception("Erro ao preparar a atualização do pedido: " . $conn->error);
 
