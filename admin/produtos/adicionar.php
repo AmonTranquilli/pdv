@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         // Lidar com o upload da imagem
         if (isset($_FILES['imagem']) && $_FILES['imagem']['error'] == UPLOAD_ERR_OK) {
-            $diretorio_uploads = '../../public/uploads/produtos/'; // Ajuste este caminho conforme sua estrutura
+            $diretorio_uploads = '/pdv/public/uploads/produtos/'; // Ajuste este caminho conforme sua estrutura
             if (!is_dir($diretorio_uploads)) {
                 mkdir($diretorio_uploads, 0777, true); // Cria o diretório se não existir
             }
