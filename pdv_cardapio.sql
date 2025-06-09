@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 09/06/2025 às 04:49
+-- Tempo de geração: 09/06/2025 às 19:37
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -31,23 +31,19 @@ CREATE TABLE `adicionais` (
   `id` int(11) NOT NULL,
   `nome` varchar(150) NOT NULL,
   `descricao` text DEFAULT NULL,
+  `imagem` varchar(255) DEFAULT NULL,
   `preco` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `controla_estoque` tinyint(1) NOT NULL DEFAULT 1,
+  `estoque` int(11) NOT NULL DEFAULT 0,
   `ativo` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- --------------------------------------------------------
-
 --
--- Estrutura para tabela `adicionais_item_pedido`
+-- Despejando dados para a tabela `adicionais`
 --
 
-CREATE TABLE `adicionais_item_pedido` (
-  `id` int(11) NOT NULL,
-  `id_item_pedido` int(11) NOT NULL,
-  `id_adicional` int(11) NOT NULL,
-  `quantidade` int(11) NOT NULL DEFAULT 1,
-  `preco_unitario` decimal(10,2) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+INSERT INTO `adicionais` (`id`, `nome`, `descricao`, `imagem`, `preco`, `controla_estoque`, `estoque`, `ativo`) VALUES
+(1, 'Cebola Roxa', '', '/pdv/public/uploads/adicionais/68471332519b7_cebola.jpg', 3.00, 0, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -118,7 +114,7 @@ CREATE TABLE `configuracoes_loja` (
 --
 
 INSERT INTO `configuracoes_loja` (`id`, `nome_hamburgueria`, `horario_funcionamento`, `pedido_minimo`, `hora_abertura`, `hora_fechamento`, `dias_abertura`, `taxa_entrega`) VALUES
-(1, 'Prisma Burguer', 'Funcionamos de Quarta à Domingo das 18:00 até 23:59', 15.00, '00:00:00', '23:59:00', '2,3,4,5,6,7', 5.00);
+(1, 'Prisma Burguer', 'Funcionamos de Quarta à Domingo das 18:00 até 23:59', 15.00, '00:00:00', '23:59:00', '1,2,3,4,5,6,7', 5.00);
 
 -- --------------------------------------------------------
 
@@ -157,6 +153,36 @@ CREATE TABLE `entregadores` (
 
 INSERT INTO `entregadores` (`id`, `nome`, `codigo_entregador`, `ativo`, `data_cadastro`) VALUES
 (1, 'Amon Tranquilli', '1', 1, '2025-06-06 14:44:19');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `grupos_opcoes`
+--
+
+CREATE TABLE `grupos_opcoes` (
+  `id` int(11) NOT NULL,
+  `id_produto_pai` int(11) NOT NULL,
+  `nome_grupo` varchar(150) NOT NULL,
+  `tipo_selecao` enum('UNICO','MULTIPLO') NOT NULL DEFAULT 'UNICO',
+  `min_opcoes` int(11) NOT NULL DEFAULT 0,
+  `max_opcoes` int(11) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `itens_grupo`
+--
+
+CREATE TABLE `itens_grupo` (
+  `id` int(11) NOT NULL,
+  `id_grupo_opcao` int(11) NOT NULL,
+  `nome_item` varchar(150) NOT NULL,
+  `preco_adicional` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `id_produto_vinculado` int(11) DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -243,6 +269,13 @@ CREATE TABLE `produto_adicional` (
   `id_adicional` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `produto_adicional`
+--
+
+INSERT INTO `produto_adicional` (`id`, `id_produto`, `id_adicional`) VALUES
+(4, 3, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -272,14 +305,6 @@ INSERT INTO `usuarios` (`id`, `nome_usuario`, `senha`, `nivel_acesso`) VALUES
 --
 ALTER TABLE `adicionais`
   ADD PRIMARY KEY (`id`);
-
---
--- Índices de tabela `adicionais_item_pedido`
---
-ALTER TABLE `adicionais_item_pedido`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `id_item_pedido` (`id_item_pedido`),
-  ADD KEY `id_adicional` (`id_adicional`);
 
 --
 -- Índices de tabela `categorias`
@@ -312,6 +337,21 @@ ALTER TABLE `cupons`
 ALTER TABLE `entregadores`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `codigo_entregador_unico` (`codigo_entregador`);
+
+--
+-- Índices de tabela `grupos_opcoes`
+--
+ALTER TABLE `grupos_opcoes`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_produto_pai` (`id_produto_pai`);
+
+--
+-- Índices de tabela `itens_grupo`
+--
+ALTER TABLE `itens_grupo`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_grupo_opcao` (`id_grupo_opcao`),
+  ADD KEY `id_produto_vinculado` (`id_produto_vinculado`);
 
 --
 -- Índices de tabela `itens_pedido`
@@ -359,13 +399,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de tabela `adicionais`
 --
 ALTER TABLE `adicionais`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `adicionais_item_pedido`
---
-ALTER TABLE `adicionais_item_pedido`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de tabela `categorias`
@@ -398,6 +432,18 @@ ALTER TABLE `entregadores`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT de tabela `grupos_opcoes`
+--
+ALTER TABLE `grupos_opcoes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `itens_grupo`
+--
+ALTER TABLE `itens_grupo`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `itens_pedido`
 --
 ALTER TABLE `itens_pedido`
@@ -407,7 +453,7 @@ ALTER TABLE `itens_pedido`
 -- AUTO_INCREMENT de tabela `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
 
 --
 -- AUTO_INCREMENT de tabela `produtos`
@@ -419,7 +465,7 @@ ALTER TABLE `produtos`
 -- AUTO_INCREMENT de tabela `produto_adicional`
 --
 ALTER TABLE `produto_adicional`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `usuarios`
@@ -432,11 +478,17 @@ ALTER TABLE `usuarios`
 --
 
 --
--- Restrições para tabelas `adicionais_item_pedido`
+-- Restrições para tabelas `grupos_opcoes`
 --
-ALTER TABLE `adicionais_item_pedido`
-  ADD CONSTRAINT `adicionais_item_pedido_ibfk_1` FOREIGN KEY (`id_item_pedido`) REFERENCES `itens_pedido` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `adicionais_item_pedido_ibfk_2` FOREIGN KEY (`id_adicional`) REFERENCES `adicionais` (`id`) ON DELETE CASCADE;
+ALTER TABLE `grupos_opcoes`
+  ADD CONSTRAINT `grupos_opcoes_ibfk_1` FOREIGN KEY (`id_produto_pai`) REFERENCES `produtos` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `itens_grupo`
+--
+ALTER TABLE `itens_grupo`
+  ADD CONSTRAINT `itens_grupo_ibfk_1` FOREIGN KEY (`id_grupo_opcao`) REFERENCES `grupos_opcoes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `itens_grupo_ibfk_2` FOREIGN KEY (`id_produto_vinculado`) REFERENCES `produtos` (`id`) ON DELETE SET NULL;
 
 --
 -- Restrições para tabelas `itens_pedido`
@@ -462,8 +514,8 @@ ALTER TABLE `produtos`
 -- Restrições para tabelas `produto_adicional`
 --
 ALTER TABLE `produto_adicional`
-  ADD CONSTRAINT `produto_adicional_ibfk_1` FOREIGN KEY (`id_produto`) REFERENCES `produtos` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `produto_adicional_ibfk_2` FOREIGN KEY (`id_adicional`) REFERENCES `adicionais` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `pa_adicional_fk` FOREIGN KEY (`id_adicional`) REFERENCES `adicionais` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `pa_produto_fk` FOREIGN KEY (`id_produto`) REFERENCES `produtos` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
