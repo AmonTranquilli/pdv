@@ -33,7 +33,7 @@
                 $mensagem_erro = "Senha incorreta.";
             }
         } else {
-            $mensagem_erro = "Nome de usuário não encontrado.";
+            $mensagem_erro = "Nome de usuário não encontrado...";
         }
         $stmt->close();
     }
