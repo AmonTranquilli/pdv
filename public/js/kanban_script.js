@@ -268,25 +268,49 @@ function fecharModalDetalhes() {
     pedidoIdAtualModal = null; 
 }
 
+// FUNÇÃO ATUALIZADA E INTELIGENTE
 async function atualizarStatusPedido(idPedido, novoStatus, fecharModal = false) {
-    try {
-        const response = await fetch('/pdv/public/api/atualizar_status_pedido.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id_pedido: idPedido, novo_status: novoStatus })
-        });
-        const resultado = await response.json();
-        if (resultado.sucesso) {
-            if (resultado.mensagem.includes("Nenhuma alteração")) {
-                showCustomAlert(resultado.mensagem, "Informação", "info");
+    // SE a ação for cancelar, nós chamamos o script especialista
+    if (novoStatus === 'cancelado') {
+        // Mostra uma confirmação extra, pois esta ação é importante
+        showCustomConfirm(`Tem certeza que deseja CANCELAR o pedido #${idPedido}? O estoque dos itens será devolvido.`, 'Confirmar Cancelamento', async () => {
+            try {
+                // Chama a API de cancelamento correta, que devolve o estoque e envia o bot
+                const response = await fetch(`/pdv/admin/pedidos/cancelar_pedido.php?id=${idPedido}`); 
+                
+                // O script de cancelamento lida com o redirecionamento e a mensagem de sessão,
+                // mas podemos recarregar os pedidos aqui para atualizar o Kanban na hora.
+                showCustomAlert("Pedido cancelado. O Kanban será atualizado.", "Sucesso", "success");
+                carregarPedidos();
+                if (fecharModal) fecharModalDetalhes();
+
+            } catch (error) {
+                showCustomAlert('Erro de comunicação ao tentar cancelar o pedido.', "Erro", "error");
             }
-            carregarPedidos(); 
-            if (fecharModal) fecharModalDetalhes();
-        } else {
-            showCustomAlert('Falha ao atualizar status: ' + resultado.mensagem, "Erro", "error");
+        }, 'error'); // Usar o tipo 'error' para o popup de confirmação de cancelamento
+
+    } 
+    // SENÃO, para qualquer outra mudança de status, usamos a API genérica de sempre
+    else {
+        try {
+            const response = await fetch('/pdv/public/api/atualizar_status_pedido.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id_pedido: idPedido, novo_status: novoStatus })
+            });
+            const resultado = await response.json();
+            if (resultado.sucesso) {
+                if (resultado.mensagem.includes("Nenhuma alteração")) {
+                    showCustomAlert(resultado.mensagem, "Informação", "info");
+                }
+                carregarPedidos(); // Atualiza o Kanban
+                if (fecharModal) fecharModalDetalhes();
+            } else {
+                showCustomAlert('Falha ao atualizar status: ' + resultado.mensagem, "Erro", "error");
+            }
+        } catch (error) {
+            showCustomAlert('Erro de comunicação ao atualizar o status.', "Erro", "error");
         }
-    } catch (error) {
-        showCustomAlert('Erro de comunicação ao atualizar o status.', "Erro", "error");
     }
 }
 

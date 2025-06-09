@@ -1,103 +1,111 @@
-<?php // GARANTA QUE NÃO HÁ NADA ANTES DESTA LINHA
-
-// pdv/public/api/atualizar_status_pedido.php
-// Defina o header JSON o mais cedo possível
+<?php
 header('Content-Type: application/json');
+require_once '../../includes/conexao.php'; // Garanta que o caminho está correto
 
-// Habilitar display de erros para depuração (REMOVA OU COMENTE EM PRODUÇÃO)
-// ini_set('display_errors', 1);
-// ini_set('display_startup_errors', 1);
-// error_reporting(E_ALL);
+// Função para enviar notificações para o nosso motor do bot
+function enviarNotificacaoWhatsApp($telefone, $dados) {
+    $url = 'http://localhost:3000/enviar-notificacao';
+    $postData = ['telefone_destino' => $telefone, 'mensagem' => $dados];
+    $payload = json_encode($postData);
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Content-Length: ' . strlen($payload)]);
+    @curl_exec($ch);
+    curl_close($ch);
+}
 
-// Inclui seu arquivo de conexão. Se houver erro aqui, pode quebrar tudo.
-// Envolva em um try-catch ou verifique se $conn é criado.
-$connection_error = null;
-try {
-    require_once '../../includes/conexao.php'; // Garanta que o caminho para conexao.php está correto
-    if (!isset($conn) || $conn->connect_error) {
-        $connection_error = isset($conn) ? $conn->connect_error : "Variável \$conn não definida em conexao.php";
-        throw new Exception("Erro de conexão: " . $connection_error);
-    }
-} catch (Exception $e) {
-    error_log("Falha crítica ao incluir conexao.php ou conectar ao BD em atualizar_status_pedido.php: " . $e->getMessage());
-    echo json_encode(['sucesso' => false, 'mensagem' => 'Erro crítico de conexão com o banco de dados. Verifique os logs do servidor.']);
+session_start();
+if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Acesso não autorizado.']);
     exit;
 }
 
-
-// Pega os dados da requisição (espera-se JSON no corpo da requisição POST)
-$raw_input = file_get_contents('php://input');
-// error_log("atualizar_status_pedido.php - Input recebido: " . $raw_input); // Descomente para logar o input bruto
-$input = json_decode($raw_input, true);
-
-// Verifique se o json_decode funcionou
-if (json_last_error() !== JSON_ERROR_NONE && !empty($raw_input)) {
-    error_log("atualizar_status_pedido.php - Erro ao decodificar JSON: " . json_last_error_msg() . " - Input: " . $raw_input);
-    echo json_encode(['sucesso' => false, 'mensagem' => 'Formato de dados inválido. Esperado JSON.']);
-    exit;
-}
-
+$input = json_decode(file_get_contents('php://input'), true);
 
 $idPedido = isset($input['id_pedido']) ? intval($input['id_pedido']) : null;
 $novoStatus = isset($input['novo_status']) ? trim($input['novo_status']) : null;
+$statusPermitidos = ['pendente', 'preparando', 'em_entrega', 'finalizado', 'cancelado'];
 
-$statusPermitidos = ['pendente', 'preparando', 'em_entrega', 'finalizado', 'cancelado']; 
-
-if (!$idPedido || $idPedido <= 0 || !$novoStatus || !in_array($novoStatus, $statusPermitidos)) {
-    error_log("atualizar_status_pedido.php - Dados inválidos: idPedido={$idPedido}, novoStatus={$novoStatus}");
-    echo json_encode(['sucesso' => false, 'mensagem' => "Dados inválidos fornecidos. ID Pedido: '{$idPedido}', Novo Status: '{$novoStatus}'. Status permitidos: " . implode(', ', $statusPermitidos)]);
+if (!$idPedido || !$novoStatus || !in_array($novoStatus, $statusPermitidos)) {
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Dados inválidos fornecidos.']);
     exit;
 }
 
+// Inicia a transação
+$conn->begin_transaction();
+
 try {
-    $sql = "UPDATE pedidos SET status = ? WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-
+    // Atualiza o status do pedido no banco de dados
+    $stmt = $conn->prepare("UPDATE pedidos SET status = ? WHERE id = ?");
     if ($stmt === false) {
-        error_log("Erro ao preparar a consulta em atualizar_status_pedido.php: " . $conn->error);
-        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro interno ao processar a solicitação (preparação).']);
-        exit;
+        throw new Exception("Erro ao preparar a atualização do pedido.");
     }
-
     $stmt->bind_param('si', $novoStatus, $idPedido);
+    $stmt->execute();
+    
+    // Verifica se alguma linha foi realmente alterada
+    if ($stmt->affected_rows > 0) {
+        // Se foi alterada, comita a transação para salvar permanentemente
+        $conn->commit();
+        $stmt->close(); // Fecha o statement após o commit
 
-    if ($stmt->execute()) {
-        if ($stmt->affected_rows > 0) {
-            echo json_encode(['sucesso' => true, 'mensagem' => 'Status do pedido atualizado com sucesso!']);
-        } else {
-            $checkSql = "SELECT status FROM pedidos WHERE id = ?";
-            $checkStmt = $conn->prepare($checkSql);
-            if($checkStmt){
-                $checkStmt->bind_param('i', $idPedido);
-                $checkStmt->execute();
-                $result = $checkStmt->get_result();
-                if ($result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    if ($row['status'] === $novoStatus) {
-                        echo json_encode(['sucesso' => true, 'mensagem' => 'O status do pedido já é ' . htmlspecialchars($novoStatus) . '. Nenhuma alteração necessária.']);
-                    } else {
-                         echo json_encode(['sucesso' => false, 'mensagem' => 'Pedido encontrado, mas o status não pôde ser atualizado (possivelmente para o mesmo valor).']);
-                    }
-                } else {
-                    echo json_encode(['sucesso' => false, 'mensagem' => 'Nenhum pedido encontrado com este ID.']);
-                }
-                $checkStmt->close();
-            } else {
-                 echo json_encode(['sucesso' => false, 'mensagem' => 'Erro ao verificar o pedido existente.']);
-            }
-        }
+        // SÓ DEPOIS DE TER CERTEZA QUE FOI SALVO, disparamos a notificação
+        // Bloco Novo e Melhorado
+
+// Disparamos a notificação para 'preparando'
+if ($novoStatus === 'preparando') {
+    $stmt_cliente = $conn->prepare("SELECT nome_cliente, telefone_cliente FROM pedidos WHERE id = ?");
+    $stmt_cliente->bind_param("i", $idPedido);
+    $stmt_cliente->execute();
+    $result_cliente = $stmt_cliente->get_result();
+    if ($cliente = $result_cliente->fetch_assoc()) {
+        $dados_para_bot = [
+            "template_name" => "pedido_em_preparacao",
+            "nome_cliente"  => explode(' ', $cliente['nome_cliente'])[0],
+            "id_pedido"     => strval($idPedido)
+        ];
+        $telefone_formatado = "55" . preg_replace('/\D/', '', $cliente['telefone_cliente']);
+        enviarNotificacaoWhatsApp($telefone_formatado, $dados_para_bot);
+    }
+    $stmt_cliente->close();
+} 
+// OU disparamos a notificação para 'em_entrega'
+else if ($novoStatus === 'em_entrega') { 
+    $stmt_cliente = $conn->prepare("SELECT telefone_cliente FROM pedidos WHERE id = ?");
+    $stmt_cliente->bind_param("i", $idPedido);
+    $stmt_cliente->execute();
+    $result_cliente = $stmt_cliente->get_result();
+    if ($cliente = $result_cliente->fetch_assoc()) {
+        $dados_para_bot = [
+            "template_name" => "pedido_a_caminho", // Novo template
+            "id_pedido"     => strval($idPedido)     // Apenas o ID é necessário
+        ];
+        $telefone_formatado = "55" . preg_replace('/\D/', '', $cliente['telefone_cliente']);
+        enviarNotificacaoWhatsApp($telefone_formatado, $dados_para_bot);
+    }
+    $stmt_cliente->close();
+}
+        
+        echo json_encode(['sucesso' => true, 'mensagem' => 'Status do pedido atualizado com sucesso!']);
+
     } else {
-        error_log("Erro ao executar a atualização do status do pedido: " . $stmt->error);
-        echo json_encode(['sucesso' => false, 'mensagem' => 'Erro interno ao atualizar o status do pedido (execução).']);
+        // Se nenhuma linha foi afetada, não precisa fazer commit nem rollback
+        $stmt->close();
+        echo json_encode(['sucesso' => true, 'mensagem' => 'Nenhuma alteração necessária, o pedido já estava com este status.']);
     }
 
-    $stmt->close();
-} catch (Exception $e) { 
-    error_log("Exceção em atualizar_status_pedido.php: " . $e->getMessage());
-    echo json_encode(['sucesso' => false, 'mensagem' => 'Erro excepcional no servidor: ' . $e->getMessage()]);
-}
+} catch (Exception $e) {
+    // Se qualquer erro ocorrer, desfaz todas as operações
+    $conn->rollback();
+    error_log("Erro em atualizar_status_pedido.php: " . $e->getMessage());
+    echo json_encode(['sucesso' => false, 'mensagem' => 'Erro ao processar a solicitação: ' . $e->getMessage()]);
 
-if (isset($conn) && !$conn->connect_error) { // Verifica se $conn existe e não tem erro de conexão
-    $conn->close();
+} finally {
+    // Fecha a conexão no final de tudo
+    if (isset($conn)) {
+        $conn->close();
+    }
 }
 ?>

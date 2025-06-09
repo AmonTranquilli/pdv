@@ -81,7 +81,24 @@ ob_start();
                             N/A
                         <?php endif; ?>
                     </td>
-                    <td><?php echo $produto['ativo'] ? '<span style="color: green; font-weight: bold;">Ativo</span>' : '<span style="color: red; font-weight: bold;">Inativo</span>'; ?></td> <td class="text-center">
+                    <td>
+    <?php
+    // Define a regra de negócio para o status real
+    $status_real_ativo = $produto['ativo']; // Começa com o status base do DB
+
+    if ($produto['controla_estoque'] == 1 && $produto['estoque'] <= 0) {
+        // Se controla estoque E o estoque está zerado, ele está inativo na prática.
+        $status_real_ativo = false;
+    }
+
+    // Exibe o status real com a cor correspondente
+    if ($status_real_ativo) {
+        echo '<span style="color: green; font-weight: bold;">Ativo</span>';
+    } else {
+        echo '<span style="color: red; font-weight: bold;">Inativo</span>';
+    }
+    ?>
+</td> <td class="text-center">
                         <a href="editar.php?id=<?php echo $produto['id']; ?>" class="btn btn-warning btn-sm">Editar</a>
                         <a href="excluir.php?id=<?php echo $produto['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este produto?');">Excluir</a>
                     </td>
