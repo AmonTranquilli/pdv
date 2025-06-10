@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 09/06/2025 às 19:37
+-- Tempo de geração: 10/06/2025 às 08:21
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -33,6 +33,7 @@ CREATE TABLE `adicionais` (
   `descricao` text DEFAULT NULL,
   `imagem` varchar(255) DEFAULT NULL,
   `preco` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `permite_quantidade` tinyint(1) NOT NULL DEFAULT 0,
   `controla_estoque` tinyint(1) NOT NULL DEFAULT 1,
   `estoque` int(11) NOT NULL DEFAULT 0,
   `ativo` tinyint(1) NOT NULL DEFAULT 1
@@ -42,8 +43,23 @@ CREATE TABLE `adicionais` (
 -- Despejando dados para a tabela `adicionais`
 --
 
-INSERT INTO `adicionais` (`id`, `nome`, `descricao`, `imagem`, `preco`, `controla_estoque`, `estoque`, `ativo`) VALUES
-(1, 'Cebola Roxa', '', '/pdv/public/uploads/adicionais/68471332519b7_cebola.jpg', 3.00, 0, 0, 1);
+INSERT INTO `adicionais` (`id`, `nome`, `descricao`, `imagem`, `preco`, `permite_quantidade`, `controla_estoque`, `estoque`, `ativo`) VALUES
+(1, 'Cebola Roxa', '', '/pdv/public/uploads/adicionais/68471332519b7_cebola.jpg', 3.00, 0, 0, 0, 1),
+(2, 'Adicional de carne', '0', '/pdv/public/uploads/adicionais/6847abf388ec4_OIP.jpeg', 2.50, 0, 0, 0, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `adicionais_item_pedido`
+--
+
+CREATE TABLE `adicionais_item_pedido` (
+  `id` int(11) NOT NULL,
+  `id_item_pedido` int(11) NOT NULL,
+  `id_adicional` int(11) NOT NULL,
+  `quantidade` int(11) NOT NULL DEFAULT 1,
+  `preco_unitario` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -200,6 +216,14 @@ CREATE TABLE `itens_pedido` (
   `observacao_item` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `itens_pedido`
+--
+
+INSERT INTO `itens_pedido` (`id`, `id_pedido`, `id_produto`, `nome_produto`, `quantidade`, `preco_unitario`, `observacao_item`) VALUES
+(174, 117, 3, 'Smash burguer', 1, 22.90, ''),
+(175, 118, 4, 'Coca-Cola Zero 2Litros', 1, 15.00, '');
+
 -- --------------------------------------------------------
 
 --
@@ -227,6 +251,14 @@ CREATE TABLE `pedidos` (
   `arquivado` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `pedidos`
+--
+
+INSERT INTO `pedidos` (`id`, `id_cliente`, `nome_cliente`, `telefone_cliente`, `endereco_entrega`, `numero_entrega`, `bairro_entrega`, `complemento_entrega`, `referencia_entrega`, `data_pedido`, `total_pedido`, `forma_pagamento`, `troco_para`, `troco`, `observacoes_pedido`, `status`, `id_entregador`, `arquivado`) VALUES
+(117, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-10 03:16:09', 27.90, 'cartao', NULL, NULL, '', 'cancelado', NULL, 1),
+(118, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-10 03:16:58', 20.00, 'cartao', NULL, NULL, '', 'cancelado', NULL, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -242,20 +274,21 @@ CREATE TABLE `produtos` (
   `imagem` varchar(255) DEFAULT NULL,
   `estoque` int(11) NOT NULL DEFAULT 0,
   `controla_estoque` tinyint(1) NOT NULL DEFAULT 1,
-  `ativo` tinyint(1) NOT NULL DEFAULT 1
+  `ativo` tinyint(1) NOT NULL DEFAULT 1,
+  `max_adicionais_opcionais` int(11) NOT NULL DEFAULT 10
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Despejando dados para a tabela `produtos`
 --
 
-INSERT INTO `produtos` (`id`, `nome`, `descricao`, `preco`, `id_categoria`, `imagem`, `estoque`, `controla_estoque`, `ativo`) VALUES
-(2, 'Coca-Cola 2Litros', 'coquinha gelada', 15.00, 2, '/pdv/public/uploads/produtos/68373f542b325_Screenshot_5.png', 1, 1, 1),
-(3, 'Smash burguer', 'PAO CARNE QUEIJO OVO', 21.90, 3, '/pdv/public/uploads/produtos/6837b16a29945_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1),
-(4, 'Coca-Cola Zero 2Litros', 'Coquinha zero', 15.00, 2, '/pdv/public/uploads/produtos/6837b4cbc0e5d_coca_cola_zero_pet_2l_23_1_490ec0e29bce8cc50dc0904868b15490.webp', 0, 0, 1),
-(5, 'Del Valle Uva 290ml', 'hmmmmm uvinha', 5.00, 2, '/pdv/public/uploads/produtos/6837c12474bae_dellvale uva.webp', 0, 0, 1),
-(6, 'X-tudo', 'burguer', 12.00, 3, '/pdv/public/uploads/produtos/683d2af63b84c_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1),
-(7, 'Sprite 2 litros', '', 15.00, 2, '/pdv/public/uploads/produtos/6844f5616f7ee_Sprite.jpeg', 0, 0, 1);
+INSERT INTO `produtos` (`id`, `nome`, `descricao`, `preco`, `id_categoria`, `imagem`, `estoque`, `controla_estoque`, `ativo`, `max_adicionais_opcionais`) VALUES
+(2, 'Coca-Cola 2Litros', 'coquinha gelada', 15.00, 2, '/pdv/public/uploads/produtos/68373f542b325_Screenshot_5.png', 1, 1, 0, 10),
+(3, 'Smash burguer', 'PAO CARNE QUEIJO OVO', 22.90, 3, '/pdv/public/uploads/produtos/6837b16a29945_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
+(4, 'Coca-Cola Zero 2Litros', 'Coquinha zero', 15.00, 2, '/pdv/public/uploads/produtos/6837b4cbc0e5d_coca_cola_zero_pet_2l_23_1_490ec0e29bce8cc50dc0904868b15490.webp', 0, 0, 1, 10),
+(5, 'Del Valle Uva 290ml', 'hmmmmm uvinha', 5.00, 2, '/pdv/public/uploads/produtos/6837c12474bae_dellvale uva.webp', 0, 0, 1, 10),
+(6, 'X-tudo', 'burguer', 12.00, 3, '/pdv/public/uploads/produtos/683d2af63b84c_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
+(7, 'Sprite 2 litros', '', 15.00, 2, '/pdv/public/uploads/produtos/6844f5616f7ee_Sprite.jpeg', 0, 0, 1, 10);
 
 -- --------------------------------------------------------
 
@@ -274,7 +307,7 @@ CREATE TABLE `produto_adicional` (
 --
 
 INSERT INTO `produto_adicional` (`id`, `id_produto`, `id_adicional`) VALUES
-(4, 3, 1);
+(13, 3, 2);
 
 -- --------------------------------------------------------
 
@@ -305,6 +338,14 @@ INSERT INTO `usuarios` (`id`, `nome_usuario`, `senha`, `nivel_acesso`) VALUES
 --
 ALTER TABLE `adicionais`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `adicionais_item_pedido`
+--
+ALTER TABLE `adicionais_item_pedido`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_adicionais_item_pedido_item` (`id_item_pedido`),
+  ADD KEY `fk_adicionais_item_pedido_adicional` (`id_adicional`);
 
 --
 -- Índices de tabela `categorias`
@@ -399,7 +440,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de tabela `adicionais`
 --
 ALTER TABLE `adicionais`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT de tabela `adicionais_item_pedido`
+--
+ALTER TABLE `adicionais_item_pedido`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `categorias`
@@ -435,25 +482,25 @@ ALTER TABLE `entregadores`
 -- AUTO_INCREMENT de tabela `grupos_opcoes`
 --
 ALTER TABLE `grupos_opcoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de tabela `itens_grupo`
 --
 ALTER TABLE `itens_grupo`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de tabela `itens_pedido`
 --
 ALTER TABLE `itens_pedido`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=174;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=179;
 
 --
 -- AUTO_INCREMENT de tabela `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=122;
 
 --
 -- AUTO_INCREMENT de tabela `produtos`
@@ -465,7 +512,7 @@ ALTER TABLE `produtos`
 -- AUTO_INCREMENT de tabela `produto_adicional`
 --
 ALTER TABLE `produto_adicional`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de tabela `usuarios`
@@ -476,6 +523,13 @@ ALTER TABLE `usuarios`
 --
 -- Restrições para tabelas despejadas
 --
+
+--
+-- Restrições para tabelas `adicionais_item_pedido`
+--
+ALTER TABLE `adicionais_item_pedido`
+  ADD CONSTRAINT `fk_adicionais_item_pedido_adicional` FOREIGN KEY (`id_adicional`) REFERENCES `adicionais` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_adicionais_item_pedido_item` FOREIGN KEY (`id_item_pedido`) REFERENCES `itens_pedido` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `grupos_opcoes`

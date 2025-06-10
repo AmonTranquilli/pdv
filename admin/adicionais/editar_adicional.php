@@ -2,15 +2,12 @@
 session_start();
 require_once '../../includes/conexao.php';
 
+// Proteção da página e validação do ID
 if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
     header("Location: ../login.php");
     exit();
 }
-
-$mensagem_erro = '';
 $adicional_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-$adicional = null;
-
 if (!$adicional_id) {
     $_SESSION['feedback_mensagem'] = "ID de adicional inválido.";
     $_SESSION['feedback_sucesso'] = false;
@@ -18,7 +15,67 @@ if (!$adicional_id) {
     exit();
 }
 
-// Lógica para carregar os dados atuais do adicional
+$mensagem_erro = '';
+$sucesso = false;
+
+// Lógica para ATUALIZAR o adicional (quando o formulário é enviado)
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $conn->begin_transaction();
+    try {
+        $nome = trim($_POST['nome']);
+        $preco_raw = str_replace(',', '.', $_POST['preco'] ?? '0');
+        $preco = filter_var($preco_raw, FILTER_VALIDATE_FLOAT);
+        $descricao = trim($_POST['descricao']);
+        $controla_estoque = isset($_POST['controla_estoque']) ? 1 : 0;
+        $estoque_post = filter_var($_POST['estoque'], FILTER_VALIDATE_INT, ['options' => ['default' => 0]]);
+        $ativo = isset($_POST['ativo']) ? 1 : 0;
+        $imagem_atual = $_POST['imagem_atual_hidden'];
+        $caminho_imagem_db = $imagem_atual;
+
+        if (empty($nome) || $preco === false || $preco < 0) {
+            throw new Exception("Por favor, preencha o Nome e um Preço válido.");
+        }
+
+        // Lógica de Upload de NOVA imagem
+        if (isset($_FILES['nova_imagem']) && $_FILES['nova_imagem']['error'] == UPLOAD_ERR_OK) {
+            $diretorio_uploads = '../../public/uploads/adicionais/';
+            if (!is_dir($diretorio_uploads)) { mkdir($diretorio_uploads, 0777, true); }
+            $nome_arquivo = uniqid() . '_' . basename($_FILES['nova_imagem']['name']);
+            $caminho_completo_nova_imagem = $diretorio_uploads . $nome_arquivo;
+            $caminho_imagem_db_nova = '/pdv/public/uploads/adicionais/' . $nome_arquivo;
+
+            if (move_uploaded_file($_FILES['nova_imagem']['tmp_name'], $caminho_completo_nova_imagem)) {
+                // Se o upload deu certo, apaga a imagem antiga se ela existir
+                if (!empty($imagem_atual) && file_exists(str_replace('/pdv/', '../../', $imagem_atual))) {
+                    @unlink(str_replace('/pdv/', '../../', $imagem_atual));
+                }
+                $caminho_imagem_db = $caminho_imagem_db_nova; // Usa o caminho da nova imagem
+            } else {
+                 throw new Exception("Erro ao fazer upload da nova imagem.");
+            }
+        }
+        
+        $estoque = $controla_estoque ? $estoque_post : 0;
+
+        $stmt_update = $conn->prepare("UPDATE adicionais SET nome = ?, preco = ?, controla_estoque = ?, estoque = ?, descricao = ?, imagem = ?, ativo = ? WHERE id = ?");
+        $stmt_update->bind_param("sdisisii", $nome, $preco, $controla_estoque, $estoque, $descricao, $caminho_imagem_db, $ativo, $adicional_id);
+
+        if ($stmt_update->execute()) {
+            $conn->commit();
+            $_SESSION['feedback_mensagem'] = "Adicional atualizado com sucesso!";
+            $_SESSION['feedback_sucesso'] = true;
+            header("Location: adicionais.php");
+            exit();
+        } else {
+            throw new Exception("Erro ao atualizar o adicional: " . $stmt_update->error);
+        }
+    } catch (Exception $e) {
+        $conn->rollback();
+        $mensagem_erro = $e->getMessage();
+    }
+}
+
+// Lógica para carregar os dados atuais do adicional para exibir no formulário
 $stmt_load = $conn->prepare("SELECT * FROM adicionais WHERE id = ?");
 $stmt_load->bind_param("i", $adicional_id);
 $stmt_load->execute();
@@ -32,60 +89,8 @@ if ($result->num_rows === 1) {
     exit();
 }
 $stmt_load->close();
-
-// Lógica para ATUALIZAR o adicional
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $nome = trim($_POST['nome']);
-    $preco_raw = str_replace(',', '.', $_POST['preco'] ?? '0');
-    $preco = filter_var($preco_raw, FILTER_VALIDATE_FLOAT);
-    $descricao = trim($_POST['descricao']);
-    $controla_estoque = isset($_POST['controla_estoque']) ? 1 : 0;
-    $estoque_post = filter_var($_POST['estoque'], FILTER_VALIDATE_INT, ['options' => ['default' => 0]]);
-    $ativo = isset($_POST['ativo']) ? 1 : 0;
-    $caminho_imagem_atual = $_POST['imagem_atual'];
-
-    $estoque = $controla_estoque ? $estoque_post : 0;
-    $caminho_imagem_db = $caminho_imagem_atual;
-
-    if (empty($nome) || $preco === false || $preco < 0) {
-        $mensagem_erro = "Por favor, preencha o Nome e um Preço válido.";
-    } else {
-        // Lógica para upload de NOVA imagem
-        if (isset($_FILES['nova_imagem']) && $_FILES['nova_imagem']['error'] == UPLOAD_ERR_OK) {
-            $diretorio_uploads = '../../public/uploads/adicionais/';
-            $nome_arquivo = uniqid() . '_' . basename($_FILES['nova_imagem']['name']);
-            $caminho_completo_nova_imagem = $diretorio_uploads . $nome_arquivo;
-            $caminho_imagem_db_nova = '/pdv/public/uploads/adicionais/' . $nome_arquivo;
-
-            if (move_uploaded_file($_FILES['nova_imagem']['tmp_name'], $caminho_completo_nova_imagem)) {
-                // Se o upload deu certo, apaga a imagem antiga se ela existir
-                if (!empty($caminho_imagem_atual) && file_exists(str_replace('/pdv/', '../../', $caminho_imagem_atual))) {
-                    unlink(str_replace('/pdv/', '../../', $caminho_imagem_atual));
-                }
-                $caminho_imagem_db = $caminho_imagem_db_nova; // Usa o caminho da nova imagem
-            } else {
-                $mensagem_erro = "Erro ao fazer upload da nova imagem.";
-            }
-        }
-
-        if (empty($mensagem_erro)) {
-            $stmt_update = $conn->prepare("UPDATE adicionais SET nome = ?, preco = ?, controla_estoque = ?, estoque = ?, descricao = ?, imagem = ?, ativo = ? WHERE id = ?");
-            $stmt_update->bind_param("sdiissii", $nome, $preco, $controla_estoque, $estoque, $descricao, $caminho_imagem_db, $ativo, $adicional_id);
-
-            if ($stmt_update->execute()) {
-                $_SESSION['feedback_mensagem'] = "Adicional atualizado com sucesso!";
-                $_SESSION['feedback_sucesso'] = true;
-                header("Location: adicionais.php");
-                exit();
-            } else {
-                $mensagem_erro = "Erro ao atualizar o adicional: " . $stmt_update->error;
-            }
-            $stmt_update->close();
-        }
-    }
-}
-
 $conn->close();
+
 $page_title = 'Editar Adicional';
 ob_start();
 ?>
@@ -101,7 +106,7 @@ ob_start();
     <?php endif; ?>
 
     <form action="editar_adicional.php?id=<?= $adicional_id; ?>" method="POST" class="form-container" enctype="multipart/form-data">
-        <input type="hidden" name="imagem_atual" value="<?= htmlspecialchars($adicional['imagem']); ?>">
+        <input type="hidden" name="imagem_atual_hidden" value="<?= htmlspecialchars($adicional['imagem']); ?>">
         
         <div class="form-row">
             <div class="form-group">
@@ -110,7 +115,7 @@ ob_start();
             </div>
             <div class="form-group">
                 <label for="preco">Preço (R$):</label>
-                <input type="text" id="preco" name="preco" value="<?= htmlspecialchars(number_format($adicional['preco'], 2, ',', '.')); ?>" placeholder="Ex: 2,50" required>
+                <input type="text" id="preco" name="preco" value="<?= number_format($adicional['preco'], 2, ',', '.'); ?>" placeholder="Ex: 2,50" required>
             </div>
         </div>
 
@@ -122,13 +127,13 @@ ob_start();
         <div class="form-group">
             <label>Imagem Atual:</label>
             <?php if (!empty($adicional['imagem'])): ?>
-                <img src="<?= htmlspecialchars($adicional['imagem']); ?>" alt="Imagem atual" style="max-width: 100px; display: block; margin-top: 5px; border-radius: 5px;">
+                <img src="<?= htmlspecialchars($adicional['imagem']); ?>" alt="Imagem atual" style="max-width: 100px; height: auto; display: block; margin-top: 5px; border-radius: 5px;">
             <?php else: ?>
                 <p>Nenhuma imagem cadastrada.</p>
             <?php endif; ?>
         </div>
         <div class="form-group">
-            <label for="nova_imagem">Alterar Imagem (opcional):</label>
+            <label for="nova_imagem">Alterar Imagem (Opcional):</label>
             <input type="file" id="nova_imagem" name="nova_imagem" accept="image/*">
         </div>
 
@@ -154,14 +159,17 @@ ob_start();
     </form>
 </div>
 
+<!-- JavaScript para mostrar/ocultar o campo de estoque -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const controlaEstoqueCheckbox = document.getElementById('controla_estoque');
     const estoqueGroup = document.getElementById('estoque_group');
 
-    controlaEstoqueCheckbox.addEventListener('change', function() {
-        estoqueGroup.style.display = this.checked ? 'block' : 'none';
-    });
+    if (controlaEstoqueCheckbox) {
+        controlaEstoqueCheckbox.addEventListener('change', function() {
+            estoqueGroup.style.display = this.checked ? 'block' : 'none';
+        });
+    }
 });
 </script>
 

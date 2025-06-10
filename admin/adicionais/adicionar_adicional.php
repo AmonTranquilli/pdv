@@ -19,9 +19,9 @@ $estoque = $_POST['estoque'] ?? 0;
 // Por padrão, um novo adicional já começa ativo
 $ativo = isset($_POST['ativo']) ? 1 : ($_SERVER['REQUEST_METHOD'] !== 'POST' ? 1 : 0);
 
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nome = trim($_POST['nome']);
+    // Permite vírgula ou ponto como separador decimal
     $preco_raw = str_replace(',', '.', $_POST['preco'] ?? '0');
     $preco = filter_var($preco_raw, FILTER_VALIDATE_FLOAT);
     $descricao = trim($_POST['descricao']);
@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $estoque_post = filter_var($_POST['estoque'], FILTER_VALIDATE_INT, ['options' => ['default' => 0]]);
     $ativo = isset($_POST['ativo']) ? 1 : 0;
     
+    // Se o controle de estoque não estiver marcado, o estoque é 0.
     $estoque = $controla_estoque ? $estoque_post : 0;
     $caminho_imagem_db = null; // Inicia como nulo
 
@@ -57,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Procede com a inserção apenas se não houver erro de upload
         if (empty($mensagem_erro)) {
             $stmt = $conn->prepare("INSERT INTO adicionais (nome, preco, controla_estoque, estoque, descricao, imagem, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("sdiissi", $nome, $preco, $controla_estoque, $estoque, $descricao, $caminho_imagem_db, $ativo);
+            $stmt->bind_param("sdisisi", $nome, $preco, $controla_estoque, $estoque, $descricao, $caminho_imagem_db, $ativo);
 
             if ($stmt->execute()) {
                 $_SESSION['feedback_mensagem'] = "Adicional '" . htmlspecialchars($nome) . "' criado com sucesso!";
@@ -92,7 +93,7 @@ ob_start();
             <div class="form-group">
                 <label for="nome">Nome do Adicional:</label>
                 <input type="text" id="nome" name="nome" value="<?= htmlspecialchars($nome); ?>" required>
-                <small>Ex: Extra Bacon, Borda de Catupiry...</small>
+                <small>Ex: Extra Bacon, Borda de Catupiry, etc.</small>
             </div>
             <div class="form-group">
                 <label for="preco">Preço (R$):</label>
@@ -132,14 +133,17 @@ ob_start();
     </form>
 </div>
 
+<!-- JavaScript para mostrar/ocultar o campo de estoque -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const controlaEstoqueCheckbox = document.getElementById('controla_estoque');
     const estoqueGroup = document.getElementById('estoque_group');
 
-    controlaEstoqueCheckbox.addEventListener('change', function() {
-        estoqueGroup.style.display = this.checked ? 'block' : 'none';
-    });
+    if (controlaEstoqueCheckbox) {
+        controlaEstoqueCheckbox.addEventListener('change', function() {
+            estoqueGroup.style.display = this.checked ? 'block' : 'none';
+        });
+    }
 });
 </script>
 

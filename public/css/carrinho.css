@@ -1,0 +1,818 @@
+
+        /* Regra universal para box-sizing: border-box */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        /* Estilos específicos para o carrinho.php */
+        body {
+            background-color: #f8f8f8;
+            padding-top: 60px; /* Espaço para o header fixo */
+            padding-bottom: 90px; /* Espaço para o footer fixo */
+            margin: 0; /* Garante que não haja margens extras */
+        }
+        .header-carrinho {
+            background-color: #fff;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+        .header-carrinho .back-arrow {
+            font-size: 1.5em;
+            color: #333;
+            text-decoration: none;
+            padding: 5px;
+        }
+        .header-carrinho h1 {
+            margin: 0;
+            font-size: 1.3em;
+            color: #333;
+            flex-grow: 1; /* Permite que o título ocupe o espaço central */
+            text-align: center;
+        }
+        .header-carrinho .btn-limpar {
+            background: none;
+            border: none;
+            color: #FF5722;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.2s ease;
+        }
+        .header-carrinho .btn-limpar:hover {
+            color: #E64A19;
+        }
+
+        .container-carrinho {
+            max-width: 600px; /* Reduzido para parecer mais com mobile */
+            margin: 20px auto;
+            padding: 0 15px; /* Padding lateral para o conteúdo */
+        }
+        .carrinho-vazio {
+            text-align: center;
+            font-size: 1.2em;
+            color: #777;
+            padding: 40px 20px;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            background-color: #fff;
+        }
+        .carrinho-vazio .btn-continuar {
+            display: inline-block;
+            margin-top: 20px;
+            background-color: #FF5722;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+        .carrinho-vazio .btn-continuar:hover {
+            background-color: #E64A19;
+        }
+
+        /* Novo estilo para os itens do carrinho (cards) */
+        .carrinho-item-card {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center; /* Centraliza verticalmente a imagem e o texto */
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        .carrinho-item-card .item-image {
+            width: 70px; /* Imagem ligeiramente menor */
+            height: 70px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 15px;
+            flex-shrink: 0; /* Não permite que a imagem encolha */
+        }
+        .carrinho-item-card .item-details {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0; /* Permite que o item shrink abaixo do tamanho de seu conteúdo */
+        }
+        .carrinho-item-card .item-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px; /* Margem reduzida */
+            white-space: normal; /* Permite que o texto quebre linha */
+            word-break: break-word; /* Força a quebra de palavras longas */
+        }
+        .carrinho-item-card .item-obs,
+        .carrinho-item-card .item-adicionais {
+            font-size: 0.8em; /* Fonte ligeiramente menor */
+            color: #777;
+            margin-bottom: 3px; /* Margem reduzida */
+            display: block;
+            white-space: normal; /* Permite que o texto quebre linha */
+            word-break: break-word; /* Força a quebra de palavras longas */
+        }
+        .carrinho-item-card .item-price {
+            font-size: 1em; /* Preço ligeiramente menor */
+            font-weight: bold;
+            color: #FF5722;
+            margin-top: 8px; /* Margem reduzida */
+        }
+
+        .carrinho-item-card .item-actions {
+            display: flex;
+            flex-direction: column; /* Empilha o controle de quantidade e o botão de remover */
+            align-items: flex-end; /* Alinha as ações à direita */
+            gap: 5px; /* Espaçamento reduzido */
+            margin-left: auto; /* Empurra para a direita */
+            flex-shrink: 0;
+        }
+        .carrinho-item-card .quantidade-controle {
+            display: flex;
+            align-items: center;
+            background-color: #f0f0f0;
+            border-radius: 20px; /* Botões mais arredondados */
+            overflow: hidden;
+            padding: 0px; /* Removido padding extra para compactar */
+        }
+        .carrinho-item-card .quantidade-controle button {
+            background-color: #f0f0f0;
+            border: none;
+            width: 30px; /* Botões ligeiramente menores */
+            height: 30px;
+            font-size: 1.1em; /* Tamanho da fonte ajustado */
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            box-sizing: border-box;
+            color: #333;
+        }
+        .carrinho-item-card .quantidade-controle button:hover:not(:disabled) {
+            background-color: #e0e0e0;
+        }
+        .carrinho-item-card .quantidade-controle button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .carrinho-item-card .quantidade-controle span {
+            font-weight: bold;
+            min-width: 20px; /* Largura mínima ligeiramente menor */
+            text-align: center;
+            font-size: 0.9em; /* Tamanho da fonte ajustado */
+            padding: 0 2px; /* Pequeno padding horizontal para o número */
+            color: #333;
+        }
+        .carrinho-item-card .btn-remover-item {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.1em; /* Ícone ligeiramente menor */
+            cursor: pointer;
+            transition: color 0.2s ease;
+            padding: 3px; /* Padding menor */
+        }
+        .carrinho-item-card .btn-remover-item:hover {
+            color: #dc3545;
+        }
+
+        /* Botão "Adicionar mais produtos" */
+        .btn-add-more-products {
+            display: block;
+            width: calc(100% - 30px); /* Ajuste para padding do container */
+            max-width: 570px; /* Mesma largura do container-carrinho - padding */
+            margin: 20px auto 30px auto;
+            background-color: #FF5722;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .btn-add-more-products:hover {
+            background-color: #E64A19;
+            transform: translateY(-2px);
+        }
+
+        /* Rodapé Fixo (Avançar) */
+        .footer-checkout {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            /* Estilos atualizados para o botão Avançar */
+            background: linear-gradient(to right, #FF5722, #E64A19); /* Gradiente */
+            color: white;
+            padding: 18px 25px; /* Aumentado para ser maior */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.2); /* Sombra mais forte */
+            z-index: 1000;
+            text-decoration: none;
+            border: none;
+            outline: none;
+            font-size: 1.3em; /* Fonte maior */
+            font-weight: bold;
+            border-top-left-radius: 15px; /* Cantos arredondados na parte superior */
+            border-top-right-radius: 15px;
+            transition: all 0.3s ease; /* Transição suave para hover */
+        }
+        .footer-checkout:hover {
+            background: linear-gradient(to right, #E64A19, #FF5722); /* Inverte o gradiente no hover */
+            transform: translateY(-3px); /* Efeito de "levantar" */
+            box-shadow: 0 -6px 20px rgba(0,0,0,0.3); /* Sombra ainda mais forte no hover */
+        }
+        .footer-checkout .checkout-text {
+            font-size: 1em; /* Mantém o tamanho relativo ao pai */
+            font-weight: bold;
+        }
+        .footer-checkout .checkout-total {
+            font-size: 1.1em; /* Mantém o tamanho relativo ao pai */
+            font-weight: bold;
+        }
+
+        /* Estilos para o Modal de Confirmação (mantidos do anterior) */
+        .confirmation-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .confirmation-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .confirmation-modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .confirmation-modal-overlay.visible .confirmation-modal-content {
+            transform: translateY(0);
+        }
+
+        .confirmation-modal-content img {
+            width: 100px; /* Ajuste o tamanho da imagem */
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .confirmation-modal-content p {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .confirmation-modal-buttons {
+            display: flex;
+            flex-direction: column; /* Botões em coluna para mobile */
+            gap: 15px;
+        }
+
+        .confirmation-modal-buttons button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .confirmation-modal-buttons .btn-confirm-yes {
+            background-color: #FF5722; /* Cor primária do seu cardápio */
+            color: white;
+        }
+
+        .confirmation-modal-buttons .btn-confirm-yes:hover {
+            background-color: #E64A19;
+            transform: translateY(-2px);
+        }
+
+        .confirmation-modal-buttons .btn-confirm-no {
+            background-color: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .confirmation-modal-buttons .btn-confirm-no:hover {
+            background-color: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        /* Estilos do Modal de Loja Fechada */
+        .store-closed-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .store-closed-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .store-closed-modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .store-closed-modal-overlay.visible .store-closed-modal-content {
+            transform: translateY(0);
+        }
+
+        .store-closed-modal-content h2 {
+            color: #FF5722;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .store-closed-modal-content p {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .store-closed-modal-content .schedule-info {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .store-closed-modal-content .schedule-info h3 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .store-closed-modal-content .schedule-info p {
+            margin: 5px 0;
+            font-size: 0.95em;
+            color: #555;
+        }
+
+        .store-closed-modal-content .btn-ok {
+            background-color: #FF5722;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .store-closed-modal-content .btn-ok:hover {
+            background-color: #E64A19;
+            transform: translateY(-2px);
+        }
+
+        /* Estilos do Modal de Pedido Mínimo */
+        .min-order-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .min-order-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .min-order-modal-content { /* CORRIGIDO: de .min-order-content para .min-order-modal-content */
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .min-order-modal-overlay.visible .min-order-modal-content {
+            transform: translateY(0);
+        }
+
+        .min-order-modal-content h2 {
+            color: #FF5722;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .min-order-modal-content p {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .min-order-modal-content .btn-ok {
+            background-color: #FF5722;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .min-order-modal-content .btn-ok:hover {
+            background-color: #E64A19;
+            transform: translateY(-2px);
+        }
+
+        /* NOVO: Estilos para o Modal de Erro de Estoque */
+        .stock-error-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .stock-error-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .stock-error-modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 450px;
+            width: 90%;
+            text-align: center; /* Centraliza o conteúdo */
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .stock-error-modal-overlay.visible .stock-error-modal-content {
+            transform: translateY(0);
+        }
+
+        .stock-error-modal-content h2 {
+            color: #FF5722;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .stock-error-modal-content #stock-error-messages {
+            margin-bottom: 20px; /* Adiciona espaço abaixo das mensagens */
+        }
+
+        .stock-error-modal-content #stock-error-messages p {
+            font-size: 1.1em; /* Aumenta um pouco a fonte */
+            color: #333; /* Cor mais escura para melhor contraste */
+            margin: 8px 0; /* Espaçamento entre as mensagens */
+            text-align: center; /* Centraliza o texto das mensagens */
+        }
+
+        .stock-error-modal-content .btn-ok {
+            background-color: #FF5722;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .stock-error-modal-content .btn-ok:hover {
+            background-color: #E64A19;
+            transform: translateY(-2px);
+        }
+
+        /* NOVO: Estilos para o Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2001; /* Acima de outros modais */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .loading-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-overlay .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #FF5722;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .loading-overlay p {
+            font-size: 1.1em;
+            color: #555;
+            font-weight: 600;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* NOVO: Estilos para o Modal de Mensagem Genérica (Erro de Conexão, etc.) */
+        .message-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .message-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .message-modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .message-modal-overlay.visible .message-modal-content {
+            transform: translateY(0);
+        }
+
+        .message-modal-content h2 {
+            color: #FF5722;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .message-modal-content p {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .message-modal-content .btn-ok {
+            background-color: #FF5722;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .message-modal-content .btn-ok:hover {
+            background-color: #E64A19;
+            transform: translateY(-2px);
+        }
+
+
+        /* Responsividade (Ajustes para telas menores) */
+        @media (max-width: 768px) {
+            .header-carrinho h1 {
+                font-size: 1.2em; /* Ligeiramente maior para melhor legibilidade */
+            }
+            .header-carrinho .btn-limpar {
+                font-size: 0.85em; /* Ligeiramente maior */
+            }
+            .container-carrinho {
+                padding: 0 10px; /* Padding reduzido para a tela não passar */
+                max-width: none; /* Permite ocupar a largura total do pai */
+            }
+            .carrinho-item-card {
+                padding: 10px; /* Padding reduzido no card do item */
+                flex-direction: row;
+                align-items: center;
+            }
+            .carrinho-item-card .item-image {
+                width: 50px; /* Imagem menor para mobile */
+                height: 50px;
+                margin-right: 10px;
+            }
+            .carrinho-item-card .item-name {
+                font-size: 0.95em; /* Texto do nome ligeiramente menor */
+                margin-bottom: 2px;
+            }
+            .carrinho-item-card .item-obs,
+            .carrinho-item-card .item-adicionais {
+                font-size: 0.7em; /* Fonte menor */
+                margin-bottom: 2px;
+            }
+            .carrinho-item-card .item-price {
+                font-size: 0.85em; /* Fonte do preço menor */
+                margin-top: 5px;
+            }
+            .carrinho-item-card .item-actions {
+                gap: 3px; /* Espaçamento menor */
+            }
+            .carrinho-item-card .quantidade-controle {
+                padding: 0; /* Garante que não há padding */
+            }
+            .carrinho-item-card .quantidade-controle button {
+                width: 26px; /* Botões ainda menores */
+                height: 26px;
+                font-size: 0.9em;
+            }
+            .carrinho-item-card .quantidade-controle span {
+                font-size: 0.8em;
+                min-width: 16px; /* Largura mínima reduzida */
+                padding: 0 1px; /* Padding ainda menor */
+            }
+            .carrinho-item-card .btn-remover-item {
+                font-size: 0.95em; /* Ícone menor */
+                padding: 2px; /* Padding menor */
+            }
+            .btn-add-more-products {
+                font-size: 1em;
+                padding: 12px 15px;
+            }
+            .footer-checkout {
+                padding: 15px 20px; /* Aumentado o padding para mobile também */
+                font-size: 1.2em; /* Fonte um pouco menor que desktop, mas maior que antes */
+            }
+            .footer-checkout .checkout-text {
+                font-size: 1em;
+            }
+            .footer-checkout .checkout-total {
+                font-size: 1.1em;
+            }
+            .confirmation-modal-content {
+                padding: 20px;
+            }
+            .confirmation-modal-buttons button {
+                font-size: 0.9em;
+                padding: 10px 15px;
+            }
+            .store-closed-modal-content {
+                padding: 20px;
+            }
+            .store-closed-modal-content h2 {
+                font-size: 1.5em;
+            }
+            .store-closed-modal-content p {
+                font-size: 1em;
+            }
+            .store-closed-modal-content .schedule-info h3 {
+                font-size: 1.1em;
+            }
+            .store-closed-modal-content .schedule-info p {
+                font-size: 0.85em;
+            }
+            .store-closed-modal-content .btn-ok {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+            .min-order-modal-content {
+                padding: 20px;
+            }
+            .min-order-modal-content h2 {
+                font-size: 1.5em;
+            }
+            .min-order-modal-content p {
+                font-size: 1em;
+            }
+            .min-order-modal-content .btn-ok {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+             .stock-error-modal-content {
+                padding: 20px;
+            }
+            .stock-error-modal-content h2 {
+                font-size: 1.5em;
+            }
+            .stock-error-modal-content #stock-error-messages p {
+                font-size: 0.9em;
+            }
+            .stock-error-modal-content .btn-ok {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+            .message-modal-content {
+                padding: 20px;
+            }
+            .message-modal-content h2 {
+                font-size: 1.5em;
+            }
+            .message-modal-content p {
+                font-size: 1em;
+            }
+            .message-modal-content .btn-ok {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+        }
