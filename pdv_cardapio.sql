@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 10/06/2025 às 08:21
+-- Tempo de geração: 11/06/2025 às 21:04
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -78,8 +78,9 @@ CREATE TABLE `categorias` (
 --
 
 INSERT INTO `categorias` (`id`, `nome`, `ordem`) VALUES
-(2, 'Bebidas', 1),
-(3, 'Hamburguer Artesanal', 0);
+(2, 'Bebidas', 2),
+(3, 'Hamburguer Artesanal', 0),
+(4, 'Fritas', 1);
 
 -- --------------------------------------------------------
 
@@ -130,7 +131,7 @@ CREATE TABLE `configuracoes_loja` (
 --
 
 INSERT INTO `configuracoes_loja` (`id`, `nome_hamburgueria`, `horario_funcionamento`, `pedido_minimo`, `hora_abertura`, `hora_fechamento`, `dias_abertura`, `taxa_entrega`) VALUES
-(1, 'Prisma Burguer', 'Funcionamos de Quarta à Domingo das 18:00 até 23:59', 15.00, '00:00:00', '23:59:00', '1,2,3,4,5,6,7', 5.00);
+(1, 'Prisma Lanches', 'Funcionamos de Quinta à Segunda das 18:00 até 23:59', 15.00, '00:00:00', '23:59:00', '1,2,3,4,5,6,7', 5.00);
 
 -- --------------------------------------------------------
 
@@ -185,6 +186,13 @@ CREATE TABLE `grupos_opcoes` (
   `max_opcoes` int(11) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `grupos_opcoes`
+--
+
+INSERT INTO `grupos_opcoes` (`id`, `id_produto_pai`, `nome_grupo`, `tipo_selecao`, `min_opcoes`, `max_opcoes`) VALUES
+(4, 3, 'Turbine seu lanche com um COMBO', 'MULTIPLO', 0, 5);
+
 -- --------------------------------------------------------
 
 --
@@ -194,11 +202,43 @@ CREATE TABLE `grupos_opcoes` (
 CREATE TABLE `itens_grupo` (
   `id` int(11) NOT NULL,
   `id_grupo_opcao` int(11) NOT NULL,
+  `tipo` enum('SIMPLES','VINCULADO','COMBO') NOT NULL DEFAULT 'SIMPLES',
   `nome_item` varchar(150) NOT NULL,
   `preco_adicional` decimal(10,2) NOT NULL DEFAULT 0.00,
   `id_produto_vinculado` int(11) DEFAULT NULL,
   `ativo` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `itens_grupo`
+--
+
+INSERT INTO `itens_grupo` (`id`, `id_grupo_opcao`, `tipo`, `nome_item`, `preco_adicional`, `id_produto_vinculado`, `ativo`) VALUES
+(6, 4, 'COMBO', 'Combo Fritas + Coca lata 350ml', 9.99, NULL, 1),
+(7, 4, 'COMBO', 'Combo Fritas + Coca lata Zero 350ml', 9.99, NULL, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `itens_grupo_combo`
+--
+
+CREATE TABLE `itens_grupo_combo` (
+  `id` int(11) NOT NULL,
+  `id_item_grupo` int(11) NOT NULL COMMENT 'ID do item na tabela itens_grupo (que é do tipo COMBO)',
+  `id_produto_componente` int(11) NOT NULL COMMENT 'ID do produto que compõe este combo (ex: Fritas)',
+  `quantidade` decimal(10,2) NOT NULL DEFAULT 1.00
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `itens_grupo_combo`
+--
+
+INSERT INTO `itens_grupo_combo` (`id`, `id_item_grupo`, `id_produto_componente`, `quantidade`) VALUES
+(1, 6, 10, 1.00),
+(2, 6, 9, 1.00),
+(3, 7, 8, 1.00),
+(4, 7, 10, 1.00);
 
 -- --------------------------------------------------------
 
@@ -283,12 +323,28 @@ CREATE TABLE `produtos` (
 --
 
 INSERT INTO `produtos` (`id`, `nome`, `descricao`, `preco`, `id_categoria`, `imagem`, `estoque`, `controla_estoque`, `ativo`, `max_adicionais_opcionais`) VALUES
-(2, 'Coca-Cola 2Litros', 'coquinha gelada', 15.00, 2, '/pdv/public/uploads/produtos/68373f542b325_Screenshot_5.png', 1, 1, 0, 10),
+(2, 'Coca-Cola 2Litros', 'coquinha gelada', 15.00, 2, '/pdv/public/uploads/produtos/68373f542b325_Screenshot_5.png', 1, 1, 1, 10),
 (3, 'Smash burguer', 'PAO CARNE QUEIJO OVO', 22.90, 3, '/pdv/public/uploads/produtos/6837b16a29945_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
 (4, 'Coca-Cola Zero 2Litros', 'Coquinha zero', 15.00, 2, '/pdv/public/uploads/produtos/6837b4cbc0e5d_coca_cola_zero_pet_2l_23_1_490ec0e29bce8cc50dc0904868b15490.webp', 0, 0, 1, 10),
 (5, 'Del Valle Uva 290ml', 'hmmmmm uvinha', 5.00, 2, '/pdv/public/uploads/produtos/6837c12474bae_dellvale uva.webp', 0, 0, 1, 10),
 (6, 'X-tudo', 'burguer', 12.00, 3, '/pdv/public/uploads/produtos/683d2af63b84c_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
-(7, 'Sprite 2 litros', '', 15.00, 2, '/pdv/public/uploads/produtos/6844f5616f7ee_Sprite.jpeg', 0, 0, 1, 10);
+(7, 'Sprite 2 litros', '', 15.00, 2, '/pdv/public/uploads/produtos/6844f5616f7ee_Sprite.jpeg', 0, 0, 1, 10),
+(8, 'Coca-Cola Zero Lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c61633ef5_622533-coca-cola-zero-lata_1.jpg.webp', 0, 0, 1, 10),
+(9, 'Coca-Cola lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c5fa4c4eb_coca-cola-lata-350-ml-1.webp', 12, 1, 1, 10),
+(10, 'Fritas M', 'Batata frita temperada no sal', 9.99, 4, '/pdv/public/uploads/produtos/6849c65b2f6d2_MC8421_2022-08-08_18_45_10_0_MC8421_0.webp', 0, 0, 1, 10);
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `produtos_combo`
+--
+
+CREATE TABLE `produtos_combo` (
+  `id` int(11) NOT NULL,
+  `id_produto_pai` int(11) NOT NULL COMMENT 'O ID do produto que é o combo.',
+  `id_produto_filho` int(11) NOT NULL COMMENT 'O ID do produto que faz parte do combo.',
+  `quantidade_filho` decimal(10,2) NOT NULL DEFAULT 1.00 COMMENT 'Quantas unidades do produto filho são consumidas.'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -307,7 +363,8 @@ CREATE TABLE `produto_adicional` (
 --
 
 INSERT INTO `produto_adicional` (`id`, `id_produto`, `id_adicional`) VALUES
-(13, 3, 2);
+(17, 3, 2),
+(18, 3, 1);
 
 -- --------------------------------------------------------
 
@@ -395,6 +452,14 @@ ALTER TABLE `itens_grupo`
   ADD KEY `id_produto_vinculado` (`id_produto_vinculado`);
 
 --
+-- Índices de tabela `itens_grupo_combo`
+--
+ALTER TABLE `itens_grupo_combo`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_id_item_grupo` (`id_item_grupo`),
+  ADD KEY `idx_id_produto_componente` (`id_produto_componente`);
+
+--
 -- Índices de tabela `itens_pedido`
 --
 ALTER TABLE `itens_pedido`
@@ -416,6 +481,14 @@ ALTER TABLE `pedidos`
 ALTER TABLE `produtos`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_categoria` (`id_categoria`);
+
+--
+-- Índices de tabela `produtos_combo`
+--
+ALTER TABLE `produtos_combo`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_produto_pai` (`id_produto_pai`),
+  ADD KEY `idx_produto_filho` (`id_produto_filho`);
 
 --
 -- Índices de tabela `produto_adicional`
@@ -452,7 +525,7 @@ ALTER TABLE `adicionais_item_pedido`
 -- AUTO_INCREMENT de tabela `categorias`
 --
 ALTER TABLE `categorias`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `clientes`
@@ -482,37 +555,49 @@ ALTER TABLE `entregadores`
 -- AUTO_INCREMENT de tabela `grupos_opcoes`
 --
 ALTER TABLE `grupos_opcoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `itens_grupo`
 --
 ALTER TABLE `itens_grupo`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT de tabela `itens_grupo_combo`
+--
+ALTER TABLE `itens_grupo_combo`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `itens_pedido`
 --
 ALTER TABLE `itens_pedido`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=179;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=182;
 
 --
 -- AUTO_INCREMENT de tabela `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=122;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=124;
 
 --
 -- AUTO_INCREMENT de tabela `produtos`
 --
 ALTER TABLE `produtos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT de tabela `produtos_combo`
+--
+ALTER TABLE `produtos_combo`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `produto_adicional`
 --
 ALTER TABLE `produto_adicional`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de tabela `usuarios`
@@ -545,6 +630,13 @@ ALTER TABLE `itens_grupo`
   ADD CONSTRAINT `itens_grupo_ibfk_2` FOREIGN KEY (`id_produto_vinculado`) REFERENCES `produtos` (`id`) ON DELETE SET NULL;
 
 --
+-- Restrições para tabelas `itens_grupo_combo`
+--
+ALTER TABLE `itens_grupo_combo`
+  ADD CONSTRAINT `fk_combo_item_grupo` FOREIGN KEY (`id_item_grupo`) REFERENCES `itens_grupo` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_combo_produto_componente` FOREIGN KEY (`id_produto_componente`) REFERENCES `produtos` (`id`) ON DELETE CASCADE;
+
+--
 -- Restrições para tabelas `itens_pedido`
 --
 ALTER TABLE `itens_pedido`
@@ -563,6 +655,13 @@ ALTER TABLE `pedidos`
 --
 ALTER TABLE `produtos`
   ADD CONSTRAINT `produtos_ibfk_1` FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `produtos_combo`
+--
+ALTER TABLE `produtos_combo`
+  ADD CONSTRAINT `fk_combo_filho` FOREIGN KEY (`id_produto_filho`) REFERENCES `produtos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_combo_pai` FOREIGN KEY (`id_produto_pai`) REFERENCES `produtos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `produto_adicional`

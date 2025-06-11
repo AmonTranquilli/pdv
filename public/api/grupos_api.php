@@ -102,29 +102,53 @@ elseif ($action === 'delete_grupo') {
 }
 
 // --- AÇÃO PARA CRIAR UM NOVO ITEM DENTRO DE UM GRUPO ---
+// --- AÇÃO PARA CRIAR UM NOVO ITEM DENTRO DE UM GRUPO (VERSÃO ATUALIZADA) ---
 elseif ($action === 'criar_item') {
-    $id_grupo = $input['id_grupo_opcao'] ?? null;
-    $nome_item = trim($input['nome_item'] ?? '');
-    $preco_adicional = filter_var($input['preco_adicional'], FILTER_VALIDATE_FLOAT, ['options' => ['default' => 0.0]]);
-    $id_produto_vinculado = filter_var($input['id_produto_vinculado'], FILTER_VALIDATE_INT);
+    $conn->begin_transaction();
+    try {
+        $id_grupo_opcao = $input['id_grupo_opcao'] ?? null;
+        $tipo = $input['tipo'] ?? 'SIMPLES';
+        $nome_item = trim($input['nome_item'] ?? '');
+        $preco_adicional = (float)($input['preco_adicional'] ?? 0.0);
+        $id_produto_vinculado = ($tipo === 'VINCULADO') ? ($input['id_produto_vinculado'] ?? null) : null;
+        $componentes = ($tipo === 'COMBO') ? ($input['componentes'] ?? []) : [];
 
-    if (empty($nome_item) || empty($id_grupo)) {
-        $response['mensagem'] = 'Dados inválidos.';
-    } else {
-        try {
-            $stmt = $conn->prepare("INSERT INTO itens_grupo (id_grupo_opcao, nome_item, preco_adicional, id_produto_vinculado) VALUES (?, ?, ?, ?)");
-            $id_prod_vinc_param = $id_produto_vinculado > 0 ? $id_produto_vinculado : NULL;
-            $stmt->bind_param("isdi", $id_grupo, $nome_item, $preco_adicional, $id_prod_vinc_param);
-            if ($stmt->execute()) {
-                $response['sucesso'] = true;
-                $response['mensagem'] = 'Item adicionado com sucesso!';
-            } else {
-                $response['mensagem'] = 'Erro ao adicionar o item: ' . $stmt->error;
-            }
-            $stmt->close();
-        } catch (Exception $e) {
-            $response['mensagem'] = 'Erro no servidor: ' . $e->getMessage();
+        if (empty($nome_item) || empty($id_grupo_opcao)) {
+            throw new Exception("O nome do item e o grupo são obrigatórios.");
         }
+
+        // Insere o item principal na tabela 'itens_grupo'
+        $stmt_item = $conn->prepare(
+            "INSERT INTO itens_grupo (id_grupo_opcao, tipo, nome_item, preco_adicional, id_produto_vinculado) VALUES (?, ?, ?, ?, ?)"
+        );
+        $stmt_item->bind_param("issdi", $id_grupo_opcao, $tipo, $nome_item, $preco_adicional, $id_produto_vinculado);
+        
+        if (!$stmt_item->execute()) {
+            throw new Exception("Erro ao criar o item principal: " . $stmt_item->error);
+        }
+
+        $id_item_grupo = $conn->insert_id; // Pega o ID do item que acabamos de criar
+
+        // Se o item for do tipo COMBO, insere seus componentes na nova tabela
+        if ($tipo === 'COMBO' && !empty($componentes)) {
+            $stmt_combo = $conn->prepare("INSERT INTO itens_grupo_combo (id_item_grupo, id_produto_componente, quantidade) VALUES (?, ?, ?)");
+            foreach ($componentes as $componente) {
+                $id_componente = $componente['id'];
+                $qtd_componente = $componente['qtd'];
+                $stmt_combo->bind_param("iid", $id_item_grupo, $id_componente, $qtd_componente);
+                if (!$stmt_combo->execute()) {
+                    throw new Exception("Erro ao inserir componente do combo: " . $stmt_combo->error);
+                }
+            }
+            $stmt_combo->close();
+        }
+
+        $conn->commit();
+        $response = ['sucesso' => true, 'mensagem' => 'Item criado com sucesso!', 'id' => $id_item_grupo];
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        $response = ['sucesso' => false, 'mensagem' => $e->getMessage()];
     }
 }
 
