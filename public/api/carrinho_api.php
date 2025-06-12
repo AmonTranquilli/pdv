@@ -63,15 +63,17 @@ switch ($action) {
             } else {
                 // Novo item, define suas propriedades
                 $_SESSION['carrinho'][$item_carrinho_id] = [
-                    'item_carrinho_id' => $item_carrinho_id,
-                    'id' => $produto['id'],
-                    'nome' => $produto['nome'],
-                    'preco_unitario' => $item['preco_unitario'], // Preço já calculado com opções
-                    'quantidade' => $quantidade,
-                    'obs' => $obs,
-                    'opcoes' => $opcoes, // Armazena o array completo de opções
-                    'imagem' => $produto['imagem']
-                ];
+    'item_carrinho_id' => $item_carrinho_id,
+    'id' => $produto['id'],
+    'nome' => $produto['nome'],
+    'preco_unitario' => $item['preco_unitario'],
+    'quantidade' => $quantidade,
+    'obs' => $obs,
+    'opcoes' => $opcoes,
+    'imagem' => $produto['imagem'],
+    'preco' => $item['preco_unitario'] * $quantidade  // <-- aqui já calcula o preço total do item
+];
+
             }
             
             $response['success'] = true;
