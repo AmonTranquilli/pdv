@@ -26,19 +26,25 @@ $action = $data['action'];
 
 switch ($action) {
     case 'add_item':
-        // Validação básica de entrada
-        $produtoId = filter_var($data['id'], FILTER_VALIDATE_INT);
-        $quantidade = filter_var($data['quantidade'], FILTER_VALIDATE_INT);
-        $obs = isset($data['obs']) ? trim($data['obs']) : '';
-        $adicionais_ids = isset($data['adicionais']) && is_array($data['adicionais']) ? $data['adicionais'] : []; // Renomeado para clareza
+        // Pega o "pacote" 'item' que contém todos os dados do produto
+        $item = $data['item'] ?? null;
 
-        if (!$produtoId || $quantidade <= 0) {
+        // Validação para garantir que o item e seus dados essenciais existem
+        if (!$item || !isset($item['id']) || !isset($item['quantidade'])) {
             $response['message'] = 'Dados do produto inválidos.';
             echo json_encode($response);
             exit();
         }
 
-        // Busca informações do produto no banco de dados, incluindo a imagem
+        // Agora, acessa os dados DENTRO do $item
+        $produtoId = filter_var($item['id'], FILTER_VALIDATE_INT);
+        $quantidade = filter_var($item['quantidade'], FILTER_VALIDATE_INT);
+        $obs = isset($item['observacao']) ? trim($item['observacao']) : '';
+        
+        // As opções e adicionais estão dentro de 'adicionais' no objeto JS
+        $opcoes = isset($item['adicionais']) && is_array($item['adicionais']) ? $item['adicionais'] : [];
+
+        // Busca informações do produto no banco de dados
         $stmt = $conn->prepare("SELECT id, nome, preco, imagem FROM produtos WHERE id = ?");
         $stmt->bind_param("i", $produtoId);
         $stmt->execute();
@@ -47,54 +53,29 @@ switch ($action) {
         $stmt->close();
 
         if ($produto) {
-            // Gerar um ID único para este item no carrinho.
-            $item_carrinho_id = $produto['id'] . '_' . md5(json_encode($adicionais_ids) . $obs); 
+            // Usa o ID único enviado pelo JavaScript
+            $item_carrinho_id = $item['item_carrinho_id']; 
 
-            // Calcula o preço total dos adicionais para UMA UNIDADE
-            $precoAdicionais = 0;
-            $detalhesAdicionais = [];
-            if (!empty($adicionais_ids)) {
-                $placeholders = implode(',', array_fill(0, count($adicionais_ids), '?'));
-                $stmtAdicionais = $conn->prepare("SELECT id, nome, preco FROM adicionais WHERE id IN ($placeholders) AND ativo = 1");
-                $types = str_repeat('i', count($adicionais_ids));
-                $stmtAdicionais->bind_param($types, ...$adicionais_ids);
-                $stmtAdicionais->execute();
-                $resultAdicionais = $stmtAdicionais->get_result();
-                while ($ad = $resultAdicionais->fetch_assoc()) {
-                    $precoAdicionais += (float)$ad['preco']; // Garante que é float
-                    $detalhesAdicionais[] = $ad;
-                }
-                $stmtAdicionais->close();
-            }
-
-            // Preço unitário real do item (preço do produto + adicionais por UMA unidade)
-            $precoUnitarioReal = (float)$produto['preco'] + $precoAdicionais;
-
-            // Verifica se o item já existe no carrinho
+            // Verifica se um item idêntico já existe
             if (isset($_SESSION['carrinho'][$item_carrinho_id])) {
-                // Item existe, atualiza a quantidade e recalcula o preço total
+                // Item existe, apenas atualiza a quantidade
                 $_SESSION['carrinho'][$item_carrinho_id]['quantidade'] += $quantidade;
-                // Garante que o preco_unitario esteja correto antes de recalcular o 'preco' total do item
-                $_SESSION['carrinho'][$item_carrinho_id]['preco_unitario'] = $precoUnitarioReal; 
-                $_SESSION['carrinho'][$item_carrinho_id]['preco'] = $_SESSION['carrinho'][$item_carrinho_id]['quantidade'] * $_SESSION['carrinho'][$item_carrinho_id]['preco_unitario'];
-                $response['message'] = 'Quantidade do item atualizada no carrinho.';
             } else {
-                // Novo item, define suas propriedades iniciais
+                // Novo item, define suas propriedades
                 $_SESSION['carrinho'][$item_carrinho_id] = [
                     'item_carrinho_id' => $item_carrinho_id,
                     'id' => $produto['id'],
                     'nome' => $produto['nome'],
-                    'preco_unitario' => $precoUnitarioReal, // Armazena o preço unitário verdadeiro
-                    'preco' => $precoUnitarioReal * $quantidade, // Calcula o preço total inicial para esta quantidade
+                    'preco_unitario' => $item['preco_unitario'], // Preço já calculado com opções
                     'quantidade' => $quantidade,
                     'obs' => $obs,
-                    'adicionais' => $detalhesAdicionais,
+                    'opcoes' => $opcoes, // Armazena o array completo de opções
                     'imagem' => $produto['imagem']
                 ];
-                $response['message'] = 'Item adicionado ao carrinho!';
             }
             
             $response['success'] = true;
+            $response['message'] = 'Item adicionado ao carrinho!';
             $response['cart'] = array_values($_SESSION['carrinho']);
         } else {
             $response['message'] = 'Produto não encontrado.';

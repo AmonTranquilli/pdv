@@ -3,14 +3,11 @@
 
 include 'includes/conexao.php';
 
-// Define o caminho base do projeto.
-// ATENÇÃO: Se o seu projeto não está em um subdiretório como 'pdv' (ex: acessa direto por http://localhost/),\
-// Mude esta variável para $basePath = '/';
 $basePath = '/pdv/'; // <--- AJUSTE ESTA LINHA SE NECESSÁRIO
 
-// --- Lógica para buscar configurações da loja do banco de dados ---
-$nome_hamburgueria = "Minha Hamburgueria"; // Valor padrão
-$horario_funcionamento_descricao = "Horário não definido"; // Descrição textual
+// --- Configurações da loja ---
+$nome_hamburgueria = "Minha Hamburgueria";
+$horario_funcionamento_descricao = "Horário não definido";
 $pedido_minimo_valor = "0,00";
 $hora_abertura_db = "00:00:00";
 $hora_fechamento_db = "23:59:59";
@@ -28,30 +25,25 @@ if ($resultConfig && $resultConfig->num_rows > 0) {
     $dias_abertura_db = $config['dias_abertura'];
 }
 
-// --- Lógica para determinar o status da loja (Aberta/Fechada) ---
-date_default_timezone_set('America/Sao_Paulo'); // Defina seu fuso horário local
-$current_time = new DateTime(); // Horário atual
-$current_day_of_week = (int)$current_time->format('N'); // 1 (para Segunda-feira) a 7 (para Domingo)
+// --- Status da loja (Aberta/Fechada) ---
+date_default_timezone_set('America/Sao_Paulo');
+$current_time = new DateTime();
+$current_day_of_week = (int)$current_time->format('N');
 
-$loja_status = "Loja Fechada"; // Status padrão
+$loja_status = "Loja Fechada";
 $loja_status_class = "fechada";
 
 $dias_abertos_array = explode(',', $dias_abertura_db);
-
 if (in_array($current_day_of_week, $dias_abertos_array)) {
-    // A loja está configurada para abrir hoje
     $open_time = DateTime::createFromFormat('H:i:s', $hora_abertura_db);
     $close_time = DateTime::createFromFormat('H:i:s', $hora_fechamento_db);
 
-    // Se o horário de fechamento for menor que o de abertura (ex: fecha na manhã do dia seguinte)
     if ($close_time < $open_time) {
-        // Se a hora atual for maior que a de abertura OU menor que a de fechamento (passou da meia-noite)
         if ($current_time->format('H:i:s') >= $open_time->format('H:i:s') || $current_time->format('H:i:s') < $close_time->format('H:i:s')) {
             $loja_status = "Loja Aberta";
             $loja_status_class = "aberta";
         }
     } else {
-        // Horário de fechamento no mesmo dia
         if ($current_time->format('H:i:s') >= $open_time->format('H:i:s') && $current_time->format('H:i:s') < $close_time->format('H:i:s')) {
             $loja_status = "Loja Aberta";
             $loja_status_class = "aberta";
@@ -59,8 +51,7 @@ if (in_array($current_day_of_week, $dias_abertos_array)) {
     }
 }
 
-
-// Busca todas as categorias, agora ordenando pela coluna 'ordem'
+// --- Categorias e Produtos ---
 $sqlCategorias = "SELECT id, nome FROM categorias ORDER BY ordem ASC, nome ASC";
 $resultCategorias = $conn->query($sqlCategorias);
 $categorias = [];
@@ -70,19 +61,15 @@ if ($resultCategorias) {
     }
 }
 
-// Busca todos os produtos
 $sqlProdutos = "SELECT id, id_categoria, nome, descricao, preco, ativo, imagem, controla_estoque, estoque FROM produtos ORDER BY id_categoria, nome";
 $resultProdutos = $conn->query($sqlProdutos);
 $produtosPorCategoria = [];
-
-// Organiza os produtos por categoria para exibição
 if ($resultProdutos) {
     while ($produto = $resultProdutos->fetch_assoc()) {
         $produtosPorCategoria[$produto['id_categoria']][] = $produto;
     }
 }
 
-// Fechar a conexão com o banco de dados
 $conn->close();
 ?>
 <!DOCTYPE html>
@@ -109,7 +96,7 @@ $conn->close();
     <span class="store-info-description"><?= $horario_funcionamento_descricao ?></span>
     <span class="store-status-text <?= $loja_status_class ?>"><?= $loja_status ?></span>
     <span class="min-order-text">Min. R$ <?= $pedido_minimo_valor ?></span>
-    </div>
+</div>
 
 <main class="main-content-area">
     <?php if (empty($categorias)): ?>
@@ -141,12 +128,12 @@ $conn->close();
                                     </div>
                                 </div>
                             </a>
-                        <?php endforeach; // Fechamento do loop de produtos ?>
+                        <?php endforeach; ?>
                     </div>
                 </section>
-            <?php endif; // Fechamento do if que verifica se há produtos na categoria ?>
-        <?php endforeach; // Fechamento do loop de categorias ?>
-    <?php endif; // Fechamento do if que verifica se há categorias ?>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
 </main>
 
 <div id="floating-cart-summary" class="floating-cart-summary oculto">
@@ -176,7 +163,6 @@ $conn->close();
         <span class="cart-count-bottom" id="cart-count">0</span>
     </a>
 </nav>
-
 
 <div id="modal-carrinho" class="carrinho-modal oculto">
     <div class="carrinho-conteudo">

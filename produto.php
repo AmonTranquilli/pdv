@@ -567,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (result.success) {
-                window.location.href = 'carrinho.php';
+                window.location.href = 'index.php';
             } else {
                 alert('Erro ao adicionar item ao carrinho: ' + result.message);
             }
