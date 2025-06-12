@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Teste Topo Fixo + Barra Categorias</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  /* Topo fixo */
+  .top-fixed-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    padding-bottom: 10px;
+  }
+  /* Header do topo */
+  .top-bar {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    border-bottom: 1px solid #ddd;
+  }
+  .restaurant-name {
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+
+  /* Barra info loja */
+  .store-info-bar {
+    padding: 5px 15px;
+    font-size: 0.9rem;
+    color: #555;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+
+  /* Barra de categorias com scroll horizontal */
+  .categories-scrollbar {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 10px 15px;
+    background-color: #fefefe;
+    scrollbar-width: none; /* Firefox */
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    height: 50px;
+    align-items: center;
+  }
+  .categories-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .category-button {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    background-color: #eee;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+  }
+  .category-button.active,
+  .category-button:hover {
+    background-color: #007bff;
+    color: #fff;
+  }
+
+  /* Conteúdo principal abaixo do topo fixo */
+  main {
+    margin-top: 150px; /* espaço para o topo fixo */
+    padding: 15px;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-fixed-container">
+  <header class="top-bar">
+    <div class="restaurant-name">Minha Hamburgueria</div>
+  </header>
+
+  <div class="store-info-bar">
+    <span>Horário: 18h às 23h</span>
+    <span class="store-status-text aberta" style="color:green;">Loja Aberta</span>
+    <span>Pedido mínimo: R$ 20,00</span>
+  </div>
+
+  <div class="categories-scrollbar" id="categories-scrollbar">
+    <button class="category-button active" data-category-id="1">Hambúrgueres</button>
+    <button class="category-button" data-category-id="2">Porções</button>
+    <button class="category-button" data-category-id="3">Bebidas</button>
+    <button class="category-button" data-category-id="4">Sobremesas</button>
+    <button class="category-button" data-category-id="5">Combos</button>
+    <button class="category-button" data-category-id="6">Extras</button>
+  </div>
+</div>
+
+<main>
+  <h1>Conteúdo do Cardápio</h1>
+  <p>Aqui vai o conteúdo dos produtos, categorias, etc...</p>
+  <p>Role para ver o topo fixo funcionando.</p>
+  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur sit amet ligula sed lorem condimentum dictum. Proin vitae lacinia velit, ac pulvinar lorem. Morbi porttitor, purus a cursus scelerisque, arcu purus porta velit, eu blandit urna erat nec nulla.</p>
+  <p>(Adicione mais conteúdo para testar a rolagem da página)</p>
+  <p style="margin-bottom: 1000px;"></p>
+</main>
+
+<script>
+  // Simples script para ativar botão ativo na categoria clicada
+  const buttons = document.querySelectorAll('.category-button');
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      buttons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+      // Aqui você pode colocar lógica para scroll da categoria no cardápio
+    });
+  });
+</script>
+
+</body>
+</html>

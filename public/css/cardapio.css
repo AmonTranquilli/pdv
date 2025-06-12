@@ -58,6 +58,64 @@ body {
     width: 100%; /* Garante que ocupe a largura total */
     box-sizing: border-box; /* Garante que padding não adicione à largura total */
 }
+.categories-scrollbar {
+    display: flex;
+    justify-content: center; /* Centraliza os botões */
+    overflow-x: auto;
+    padding: 10px 0;
+    background-color: #fff;
+    white-space: nowrap;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none; /* Esconde a barra no Firefox */
+}
+
+.categories-scrollbar::-webkit-scrollbar {
+    display: none; /* Esconde a barra no Chrome/Safari */
+}
+
+.category-button {
+    flex: 0 0 auto;
+    margin: 0 6px;
+    padding: 8px 14px;
+    border: none;
+    background-color: #eee;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background-color 0.2s;
+}
+
+.category-button.active {
+    background-color: #ff5722;
+    color: #fff;
+    font-weight: bold;
+}
+.categories-scrollbar {
+    position: sticky;
+    top: 60px; /* ajuste conforme a altura do seu header */
+    z-index: 10;
+    background-color: #ffffff;
+}
+/* ---- Estilos para o Cabeçalho Fixo ---- */
+
+/* O contêiner que agrupa tudo que é fixo no topo */
+.page-header-fixed {
+    position: fixed; /* ou 'fixed' se preferir */
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff; /* Fundo branco para não ficar transparente */
+    z-index: 1000; /* Garante que ele fique acima do conteúdo que rola */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra sutil opcional */
+}
+
+/* Ajuste para o conteúdo principal */
+/* Isso empurra o conteúdo dos produtos para baixo, 
+   evitando que ele comece escondido atrás do cabeçalho fixo */
+body {
+    /* IMPORTANTE: Ajuste este valor para a altura exata do seu cabeçalho */
+    padding-top: 150px; 
+}
 
 /* Conteúdo interno da barra superior */
 .top-bar-content {
@@ -837,4 +895,5 @@ body {
         padding: 10px;
         font-size: 1em;
     }
+    
 }

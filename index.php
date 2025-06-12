@@ -82,7 +82,7 @@ $conn->close();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
-
+<div class="page-header-fixed">
 <header class="top-bar">
     <div class="top-bar-content">
         <div class="restaurant-name"><?= $nome_hamburgueria ?></div>
@@ -98,6 +98,15 @@ $conn->close();
     <span class="min-order-text">Min. R$ <?= $pedido_minimo_valor ?></span>
 </div>
 
+<!-- Barra horizontal de categorias com scroll -->
+<div class="categories-scrollbar">
+    <?php foreach ($categorias as $categoria): ?>
+        <button class="category-button" data-category-id="<?= htmlspecialchars($categoria['id']) ?>">
+            <?= htmlspecialchars($categoria['nome']) ?>
+        </button>
+    <?php endforeach; ?>
+</div>
+</div>
 <main class="main-content-area">
     <?php if (empty($categorias)): ?>
         <p class="no-content-message">Nenhuma categoria cadastrada ainda.</p>
@@ -175,5 +184,85 @@ $conn->close();
 </div>
 
 <script src="public/js/cardapio.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const buttons = document.querySelectorAll('.category-button');
+    const sections = document.querySelectorAll('.category-section');
+    const fixedHeader = document.querySelector('.page-header-fixed');
+
+    if (sections.length === 0 || buttons.length === 0) {
+        return; // Não faz nada se não houver seções ou botões
+    }
+
+    // Função para limpar a classe 'active' de todos os botões
+    function clearActive() {
+        buttons.forEach(btn => btn.classList.remove('active'));
+    }
+
+    // --- LÓGICA DE ATIVAÇÃO POR SCROLL (INTERSECTION OBSERVER) ---
+
+    // Opções do Observer
+    const observerOptions = {
+        // rootMargin: Usa a altura do cabeçalho para que a ativação ocorra
+        // quando a seção aparece ABAIXO do cabeçalho, e não atrás dele.
+        // IMPORTANTE: Ajuste o valor -140px se a altura do seu cabeçalho mudar.
+        rootMargin: `-${fixedHeader.offsetHeight + 10}px 0px 0px 0px`,
+        threshold: 0.1 // Ativa quando 10% da seção está visível
+    };
+
+    // A função que será chamada quando uma seção entrar ou sair da tela
+    const handleIntersect = (entries) => {
+        entries.forEach(entry => {
+            // entry.isIntersecting é 'true' quando o elemento está visível
+            if (entry.isIntersecting) {
+                const categoryId = entry.target.getAttribute('data-category-id');
+                const activeButton = document.querySelector(`.category-button[data-category-id="${categoryId}"]`);
+                
+                if (activeButton) {
+                    clearActive(); // Limpa o botão que estava ativo antes
+                    activeButton.classList.add('active'); // Ativa o novo botão
+                }
+            }
+        });
+    };
+
+    // Cria o observer
+    const observer = new IntersectionObserver(handleIntersect, observerOptions);
+
+    // Manda o observer "observar" cada uma das seções de categoria
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+
+    // --- LÓGICA DE CLIQUE (CONTINUA FUNCIONANDO) ---
+    buttons.forEach(button => {
+        button.addEventListener('click', () => {
+            const categoryId = button.getAttribute('data-category-id');
+            const targetSection = document.querySelector(`.category-section[data-category-id="${categoryId}"]`);
+
+            if (targetSection) {
+                const headerHeight = fixedHeader ? fixedHeader.offsetHeight : 0;
+                const targetPosition = targetSection.offsetTop - headerHeight - 10;
+
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+                
+                // O observer cuidará de ativar o botão, mas podemos fazer manualmente
+                // para uma resposta instantânea ao clique.
+                clearActive();
+                button.classList.add('active');
+            }
+        });
+    });
+
+    // Ativa a primeira categoria ao carregar a página por padrão
+    if (buttons.length > 0) {
+        buttons[0].classList.add('active');
+    }
+});
+</script>
+
 </body>
 </html>

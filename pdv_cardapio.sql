@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 11/06/2025 às 21:04
+-- Tempo de geração: 12/06/2025 às 21:57
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -191,7 +191,7 @@ CREATE TABLE `grupos_opcoes` (
 --
 
 INSERT INTO `grupos_opcoes` (`id`, `id_produto_pai`, `nome_grupo`, `tipo_selecao`, `min_opcoes`, `max_opcoes`) VALUES
-(4, 3, 'Turbine seu lanche com um COMBO', 'MULTIPLO', 0, 5);
+(4, 3, 'Turbine seu lanche com um COMBO', 'UNICO', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -262,7 +262,9 @@ CREATE TABLE `itens_pedido` (
 
 INSERT INTO `itens_pedido` (`id`, `id_pedido`, `id_produto`, `nome_produto`, `quantidade`, `preco_unitario`, `observacao_item`) VALUES
 (174, 117, 3, 'Smash burguer', 1, 22.90, ''),
-(175, 118, 4, 'Coca-Cola Zero 2Litros', 1, 15.00, '');
+(175, 118, 4, 'Coca-Cola Zero 2Litros', 1, 15.00, ''),
+(182, 124, 3, 'Smash burguer', 1, 35.39, ''),
+(183, 125, 3, 'Smash burguer', 1, 45.89, '');
 
 -- --------------------------------------------------------
 
@@ -297,7 +299,9 @@ CREATE TABLE `pedidos` (
 
 INSERT INTO `pedidos` (`id`, `id_cliente`, `nome_cliente`, `telefone_cliente`, `endereco_entrega`, `numero_entrega`, `bairro_entrega`, `complemento_entrega`, `referencia_entrega`, `data_pedido`, `total_pedido`, `forma_pagamento`, `troco_para`, `troco`, `observacoes_pedido`, `status`, `id_entregador`, `arquivado`) VALUES
 (117, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-10 03:16:09', 27.90, 'cartao', NULL, NULL, '', 'cancelado', NULL, 1),
-(118, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-10 03:16:58', 20.00, 'cartao', NULL, NULL, '', 'cancelado', NULL, 1);
+(118, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-10 03:16:58', 20.00, 'cartao', NULL, NULL, '', 'cancelado', NULL, 1),
+(124, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-12 11:24:32', 5.00, 'cartao', NULL, NULL, '', 'pendente', NULL, 0),
+(125, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-12 14:50:51', 50.89, 'pix', NULL, NULL, '', 'pendente', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -324,14 +328,15 @@ CREATE TABLE `produtos` (
 
 INSERT INTO `produtos` (`id`, `nome`, `descricao`, `preco`, `id_categoria`, `imagem`, `estoque`, `controla_estoque`, `ativo`, `max_adicionais_opcionais`) VALUES
 (2, 'Coca-Cola 2Litros', 'coquinha gelada', 15.00, 2, '/pdv/public/uploads/produtos/68373f542b325_Screenshot_5.png', 1, 1, 1, 10),
-(3, 'Smash burguer', 'PAO CARNE QUEIJO OVO', 22.90, 3, '/pdv/public/uploads/produtos/6837b16a29945_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
+(3, 'Smash burguer', 'pao carne queijo ovo', 22.90, 3, '/pdv/public/uploads/produtos/6837b16a29945_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
 (4, 'Coca-Cola Zero 2Litros', 'Coquinha zero', 15.00, 2, '/pdv/public/uploads/produtos/6837b4cbc0e5d_coca_cola_zero_pet_2l_23_1_490ec0e29bce8cc50dc0904868b15490.webp', 0, 0, 1, 10),
 (5, 'Del Valle Uva 290ml', 'hmmmmm uvinha', 5.00, 2, '/pdv/public/uploads/produtos/6837c12474bae_dellvale uva.webp', 0, 0, 1, 10),
 (6, 'X-tudo', 'burguer', 12.00, 3, '/pdv/public/uploads/produtos/683d2af63b84c_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
 (7, 'Sprite 2 litros', '', 15.00, 2, '/pdv/public/uploads/produtos/6844f5616f7ee_Sprite.jpeg', 0, 0, 1, 10),
 (8, 'Coca-Cola Zero Lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c61633ef5_622533-coca-cola-zero-lata_1.jpg.webp', 0, 0, 1, 10),
 (9, 'Coca-Cola lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c5fa4c4eb_coca-cola-lata-350-ml-1.webp', 12, 1, 1, 10),
-(10, 'Fritas M', 'Batata frita temperada no sal', 9.99, 4, '/pdv/public/uploads/produtos/6849c65b2f6d2_MC8421_2022-08-08_18_45_10_0_MC8421_0.webp', 0, 0, 1, 10);
+(10, 'Fritas M', 'Batata frita temperada no sal', 9.99, 4, '/pdv/public/uploads/produtos/6849c65b2f6d2_MC8421_2022-08-08_18_45_10_0_MC8421_0.webp', 0, 0, 1, 10),
+(11, 'Refrigerante 2litros', 'Refrigerante', 0.00, 2, '/pdv/public/uploads/produtos/684a473ea28b6_1000000030.jpg', 0, 0, 1, 10);
 
 -- --------------------------------------------------------
 
@@ -363,8 +368,10 @@ CREATE TABLE `produto_adicional` (
 --
 
 INSERT INTO `produto_adicional` (`id`, `id_produto`, `id_adicional`) VALUES
-(17, 3, 2),
-(18, 3, 1);
+(29, 3, 2),
+(30, 3, 1),
+(31, 11, 2),
+(32, 11, 1);
 
 -- --------------------------------------------------------
 
@@ -555,13 +562,13 @@ ALTER TABLE `entregadores`
 -- AUTO_INCREMENT de tabela `grupos_opcoes`
 --
 ALTER TABLE `grupos_opcoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de tabela `itens_grupo`
 --
 ALTER TABLE `itens_grupo`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de tabela `itens_grupo_combo`
@@ -573,19 +580,19 @@ ALTER TABLE `itens_grupo_combo`
 -- AUTO_INCREMENT de tabela `itens_pedido`
 --
 ALTER TABLE `itens_pedido`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=182;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=184;
 
 --
 -- AUTO_INCREMENT de tabela `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=124;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
 
 --
 -- AUTO_INCREMENT de tabela `produtos`
 --
 ALTER TABLE `produtos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de tabela `produtos_combo`
@@ -597,7 +604,7 @@ ALTER TABLE `produtos_combo`
 -- AUTO_INCREMENT de tabela `produto_adicional`
 --
 ALTER TABLE `produto_adicional`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT de tabela `usuarios`
