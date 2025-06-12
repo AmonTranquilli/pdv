@@ -319,7 +319,7 @@ $conn->close();
             <?php if(!empty($adicionais)): ?>
                 <div class="option-group open" data-max-adicionais="<?= $produto['max_adicionais_opcionais'] ?>">
                     <div class="option-group-header">
-                        <div class="option-group-header-title"><h2>Adicionais</h2><span class="group-rules">Selecione quantos quiser</span></div>
+                        <div class="option-group-header-title"><h2>Adicionais</h2><span class="group-rules">Selecione até 10</span></div>
                         <i class="fas fa-chevron-down chevron-icon"></i>
                     </div>
                     <div class="option-group-content">

@@ -6,6 +6,13 @@
 *, *::before, *::after {
     box-sizing: border-box;
 }
+/* --- CORREÇÃO DO LINK DO CARD --- */
+/* Esta é a regra principal que remove o sublinhado */
+a.product-card,
+a.product-card:hover {
+    text-decoration: none;
+    color: inherit; /* Garante que a cor do texto não seja azul */
+}
 
 /* Garante que HTML e Body ocupem 100% da largura e escondam overflow horizontal */
 html, body {

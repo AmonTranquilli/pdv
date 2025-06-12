@@ -118,56 +118,35 @@ $conn->close();
         <?php foreach ($categorias as $categoria): ?>
             <?php
             $produtosDaCategoria = $produtosPorCategoria[$categoria['id']] ?? [];
-            if (!empty($produtosDaCategoria)): // Só exibe a seção se houver produtos nela
+            if (!empty($produtosDaCategoria)):
             ?>
                 <section class="category-section" data-category-id="<?= htmlspecialchars($categoria['id']) ?>">
                     <h2 class="category-title"><?= htmlspecialchars($categoria['nome']) ?></h2>
                     <div class="products-grid">
                         <?php foreach ($produtosDaCategoria as $produto):
-                            // Verifica se o produto está ativo e se o estoque permite
                             $indisponivel = (!$produto['ativo'] || ($produto['controla_estoque'] && $produto['estoque'] <= 0)) ? 'indisponivel' : '';
                             $nomeProduto = htmlspecialchars($produto['nome']);
                             if ($indisponivel) {
                                 $nomeProduto .= ' (Indisponível)';
                             }
-
-                            // --- LÓGICA PARA O CAMINHO DA IMAGEM ---
-                            $caminhoImagemProduto = '';
-                            if (!empty($produto['imagem'])) {
-                                if (strpos($produto['imagem'], 'http://') === 0 || strpos($produto['imagem'], 'https://') === 0 || strpos($produto['imagem'], '/') === 0) {
-                                    $caminhoImagemProduto = $produto['imagem'];
-                                } else {
-                                    $caminhoImagemProduto = $basePath . $produto['imagem'];
-                                }
-                            } else {
-                                $caminhoImagemProduto = $basePath . 'public/img/default-product.png'; 
-                            }
-                            // --- FIM DA LÓGICA DA IMAGEM ---
+                            $caminhoImagemProduto = !empty($produto['imagem']) ? $produto['imagem'] : $basePath . 'public/img/default-product.png';
                         ?>
-                            <div class="product-card <?= $indisponivel ?>"
-                                data-categoria="<?= htmlspecialchars($produto['id_categoria']) ?>"
-                                data-id="<?= htmlspecialchars($produto['id']) ?>"
-                                data-nome="<?= htmlspecialchars($produto['nome']) ?>"
-                                data-descricao="<?= htmlspecialchars($produto['descricao']) ?>"
-                                data-preco="<?= htmlspecialchars($produto['preco']) ?>"
-                                data-img="<?= htmlspecialchars($caminhoImagemProduto) ?>"
-                                data-controla-estoque="<?= $produto['controla_estoque'] ? 'true' : 'false' ?>"
-                                data-estoque="<?= htmlspecialchars($produto['estoque']) ?>"
-                                data-ativo="<?= $produto['ativo'] ? 'true' : 'false' ?>">
+                            <a href="produto.php?id=<?= htmlspecialchars($produto['id']) ?>" class="product-card <?= $indisponivel ?>">
                                 <img src="<?= htmlspecialchars($caminhoImagemProduto) ?>" alt="<?= htmlspecialchars($produto['nome']) ?>" class="product-image" onerror="this.onerror=null;this.src='<?= $basePath ?>public/img/default-product.png';" />
                                 <div class="product-info">
                                     <h3 class="product-name"><?= $nomeProduto ?></h3>
                                     <p class="product-description"><?= htmlspecialchars(mb_strimwidth($produto['descricao'], 0, 70, '...')) ?></p>
-                                    <div class="product-actions"> <span class="product-price">R$ <?= number_format($produto['preco'], 2, ',', '.') ?></span>
-                                        </div>
+                                    <div class="product-actions">
+                                        <span class="product-price">R$ <?= number_format($produto['preco'], 2, ',', '.') ?></span>
+                                    </div>
                                 </div>
-                            </div>
-                        <?php endforeach; ?>
+                            </a>
+                        <?php endforeach; // Fechamento do loop de produtos ?>
                     </div>
                 </section>
-            <?php endif; ?>
-        <?php endforeach; ?>
-    <?php endif; ?>
+            <?php endif; // Fechamento do if que verifica se há produtos na categoria ?>
+        <?php endforeach; // Fechamento do loop de categorias ?>
+    <?php endif; // Fechamento do if que verifica se há categorias ?>
 </main>
 
 <div id="floating-cart-summary" class="floating-cart-summary oculto">
@@ -198,32 +177,6 @@ $conn->close();
     </a>
 </nav>
 
-<div id="modal-produto" class="carrinho-modal oculto">
-  <div class="card-produto">
-    <button id="fechar-modal-produto" class="btn-fechar">✕</button>
-    <img id="modal-img" src="" alt="Imagem do Produto" class="img-produto-modal">
-    
-    <div class="info-produto">
-      <h2 id="modal-nome"></h2>
-      <p id="modal-descricao" class="descricao-produto"></p>
-
-      <label for="observacoes">Observações:</label>
-      <textarea id="observacoes" rows="2" placeholder="Ex: Tirar cebola, bem passado..." class="input-observacoes"></textarea>
-
-      <div id="area-adicionais" class="area-adicionais">
-        <h3>Adicionais:</h3>
-        </div>
-
-      <div class="controle-quantidade">
-        <button id="diminuir">−</button>
-        <span id="quantidade">1</span>
-        <button id="aumentar">+</button>
-      </div>
-
-      <button id="confirmar-adicao" class="btn-confirmar">Adicionar ao carrinho</button>
-    </div>
-  </div>
-</div>
 
 <div id="modal-carrinho" class="carrinho-modal oculto">
     <div class="carrinho-conteudo">
