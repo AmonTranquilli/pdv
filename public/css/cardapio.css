@@ -23,6 +23,7 @@ html, body {
 :root {
     --primary-color: #FF5722; /* Laranja vibrante */
     --secondary-color: #4CAF50; /* Verde para sucesso/destaque */
+    --price-color: #595959;
     --text-dark: #333;
     --text-light: #f8f8f8;
     --background-light: #ffffff;
@@ -279,8 +280,8 @@ body {
 }
 
 .product-image {
-    width: 100px; /* Largura fixa para a imagem */
-    height: 100px; /* Altura fixa para a imagem */
+    width: 120px; /* Largura fixa para a imagem */
+    height: 120px; /* Altura fixa para a imagem */
     object-fit: cover;
     border-radius: var(--border-radius-base); /* Borda arredondada para a imagem */
     margin-left: 15px; /* Espaço à esquerda da imagem (agora que está à direita) */
@@ -299,7 +300,8 @@ body {
 .product-name {
     font-size: 1.2em; /* Tamanho do nome ajustado */
     font-weight: 600;
-    margin-bottom: 5px; /* Espaçamento menor */
+    margin-top: 0;
+    margin-bottom: 0px; /* Espaçamento menor */
     color: var(--text-dark);
     white-space: normal;
     word-break: break-word;
@@ -309,7 +311,7 @@ body {
     font-size: 0.85em; /* Tamanho da descrição ajustado */
     color: #666;
     margin-bottom: 10px; /* Espaçamento ajustado */
-    flex-grow: 1; /* Permite que a descrição ocupe espaço */
+    flex-grow: 0; /* Permite que a descrição ocupe espaço */
     white-space: normal;
     word-break: break-word;
     line-height: 1.4;
@@ -325,8 +327,8 @@ body {
 
 .product-price {
     font-size: 1.1em;
-    color: var(--primary-color);
-    font-weight: 700; /* Preço mais negrito */
+    color: var(--price-color);
+    font-weight: 600; /* Preço mais negrito */
     margin-bottom: 0; /* Remove margem inferior padrão */
     flex-shrink: 0; /* Evita que o preço encolha */
 }
