@@ -42,7 +42,7 @@ switch ($action) {
         $obs = isset($item['observacao']) ? trim($item['observacao']) : '';
         
         // As opções e adicionais estão dentro de 'adicionais' no objeto JS
-        $opcoes = isset($item['adicionais']) && is_array($item['adicionais']) ? $item['adicionais'] : [];
+        $opcoes = isset($item['opcoes']) && is_array($item['opcoes']) ? $item['opcoes'] : [];
 
         // Busca informações do produto no banco de dados
         $stmt = $conn->prepare("SELECT id, nome, preco, imagem FROM produtos WHERE id = ?");

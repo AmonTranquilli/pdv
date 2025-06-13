@@ -323,81 +323,81 @@ $conn->close();
                 showMessageModal('Erro de Conexão', 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.');
                 return { success: false, message: 'Erro de conexão com o servidor.' };
             }
+            
         }
 
-        // Função para atualizar o carrinho na interface, buscando dados do backend
-        async function atualizarCarrinhoUI() {
-            const result = await gerenciarCarrinhoAPI('get_cart');
-            if (result.success) {
-                const carrinhoDoBackend = result.cart;
-                carrinhoItensContainer.innerHTML = '';
-                currentCartTotal = 0; // Reseta o total
+// COLE ESTA FUNÇÃO COMPLETA NO LUGAR DA SUA ATUAL
+async function atualizarCarrinhoUI() {
+    const result = await gerenciarCarrinhoAPI('get_cart');
+    if (result.success) {
+         console.log(result.cart);
+        const carrinhoDoBackend = result.cart;
+        carrinhoItensContainer.innerHTML = '';
+        currentCartTotal = 0; // Reseta o total
 
-                if (carrinhoDoBackend.length === 0) {
-                    // Se o carrinho estiver vazio, redireciona para recarregar a página e mostrar a mensagem de carrinho vazio
-                    window.location.href = 'carrinho.php';
-                    return;
-                }
-
-                carrinhoDoBackend.forEach(item => {
-                    const itemCard = document.createElement('div');
-                    itemCard.className = 'carrinho-item-card';
-                    itemCard.setAttribute('data-item-id', item.item_carrinho_id);
-
-                    let adicionaisHtml = '';
-                    if (item.adicionais && item.adicionais.length > 0) {
-                        const adicionaisNomes = item.adicionais.map(ad => `${ad.nome} (+R$ ${parseFloat(ad.preco).toFixed(2).replace('.', ',')})`);
-                        adicionaisHtml = `<span class="item-adicionais">Adicionais: ${adicionaisNomes.join(', ')}</span>`;
-                    }
-
-                    const disableDiminuir = item.quantidade === 1 ? 'disabled' : '';
-                    const imageUrl = item.imagem && item.imagem !== '' ? item.imagem : 'https://placehold.co/80x80/FF5722/FFFFFF?text=Item';
-
-                    // Calcula o preço total do item (quantidade * preço base + adicionais)
-                    let itemTotalPrice = parseFloat(item.preco_unitario) * item.quantidade;
-                    if (item.adicionais && item.adicionais.length > 0) {
-                        item.adicionais.forEach(ad => {
-                            itemTotalPrice += parseFloat(ad.preco) * item.quantidade; // Adiciona o preço do adicional pela quantidade do item
-                        });
-                    }
-
-
-                    itemCard.innerHTML = `
-                        <img src="${imageUrl}" alt="${item.nome}" class="item-image" onerror="this.onerror=null;this.src='https://placehold.co/80x80/cccccc/333333?text=Sem+Imagem';">
-                        <div class="item-details">
-                            <span class="item-name">${item.quantidade}x ${item.nome}</span>
-                            ${item.obs ? `<span class="item-obs">Obs: ${item.obs}</span>` : ''}
-                            ${adicionaisHtml}
-                            <span class="item-price">R$ ${itemTotalPrice.toFixed(2).replace('.', ',')}</span>
-                        </div>
-                        <div class="item-actions">
-                            <div class="quantidade-controle">
-                                <button class="diminuir-quantidade" data-item-id="${item.item_carrinho_id}" ${disableDiminuir}>−</button>
-                                <span class="quantidade-item">${item.quantidade}</span>
-                                <button class="aumentar-quantidade" data-item-id="${item.item_carrinho_id}">+</button>
-                            </div>
-                            <button class="btn-remover-item" data-item-id="${item.item_carrinho_id}" data-item-nome="${item.nome}">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                    `;
-                    carrinhoItensContainer.appendChild(itemCard);
-
-                    currentCartTotal += itemTotalPrice;
-                });
-
-                totalCarrinhoFinal.textContent = `R$ ${currentCartTotal.toFixed(2).replace('.', ',')}`;
-                minOrderValueDisplay.textContent = `R$ ${pedidoMinimo.toFixed(2).replace('.', ',')}`; // Atualiza o valor no modal
-
-                // Adiciona/Re-adiciona listeners de evento
-                addEventListenersToCartItems();
-
-            } else {
-                carrinhoItensContainer.innerHTML = '<p class="carrinho-vazio">Erro ao carregar carrinho. Por favor, tente novamente.</p>';
-                totalCarrinhoFinal.textContent = 'R$ 0,00';
-                btnAvancarCheckout.style.display = 'none';
-            }
+        if (carrinhoDoBackend.length === 0) {
+            window.location.href = 'carrinho.php';
+            return;
         }
+
+        carrinhoDoBackend.forEach(item => {
+    const itemCard = document.createElement('div');
+    itemCard.className = 'carrinho-item-card';
+    itemCard.setAttribute('data-item-id', item.item_carrinho_id);
+
+    // --- LÓGICA PARA EXIBIR DETALHES ---
+    let detalhesHtml = '';
+    // 1. Cria a lista de opções (Combos, Adicionais, etc.)
+    if (item.opcoes && item.opcoes.length > 0) {
+        const optionsList = item.opcoes.map(opt => `<li>+ ${opt.nome}</li>`).join('');
+        detalhesHtml += `<ul class="item-options-list">${optionsList}</ul>`;
+    }
+    // 2. Adiciona as observações, se existirem
+    if (item.obs && item.obs.trim() !== '') {
+        detalhesHtml += `<p class="item-obs"><b>Obs:</b> ${item.obs}</p>`;
+    }
+
+    // --- CÁLCULO DE PREÇO CORRETO ---
+    // O preço total da linha é o preço unitário (que já inclui adicionais) x quantidade.
+    const itemTotalPrice = parseFloat(item.preco_unitario) * item.quantidade;
+
+    const disableDiminuir = item.quantidade === 1 ? 'disabled' : '';
+    const imageUrl = item.imagem || 'public/img/default-product.png';
+
+    // --- ESTRUTURA HTML FINAL ---
+    itemCard.innerHTML = `
+        <img src="${imageUrl}" alt="${item.nome}" class="item-image" onerror="this.onerror=null;this.src='public/img/default-product.png';">
+        <div class="item-details">
+            <span class="item-name">${item.quantidade}x ${item.nome}</span>
+            ${detalhesHtml}
+            <span class="item-price">R$ ${itemTotalPrice.toFixed(2).replace('.', ',')}</span>
+        </div>
+        <div class="item-actions">
+            <div class="quantidade-controle">
+                <button class="diminuir-quantidade" data-item-id="${item.item_carrinho_id}" ${disableDiminuir}>−</button>
+                <span class="quantidade-item">${item.quantidade}</span>
+                <button class="aumentar-quantidade" data-item-id="${item.item_carrinho_id}">+</button>
+            </div>
+            <button class="btn-remover-item" data-item-id="${item.item_carrinho_id}" data-item-nome="${item.nome}">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+    `;
+    carrinhoItensContainer.appendChild(itemCard);
+    currentCartTotal += itemTotalPrice;
+});
+
+        totalCarrinhoFinal.textContent = `R$ ${currentCartTotal.toFixed(2).replace('.', ',')}`;
+        minOrderValueDisplay.textContent = `R$ ${pedidoMinimo.toFixed(2).replace('.', ',')}`;
+
+        addEventListenersToCartItems();
+
+    } else {
+        carrinhoItensContainer.innerHTML = '<p class="carrinho-vazio">Erro ao carregar carrinho. Por favor, tente novamente.</p>';
+        totalCarrinhoFinal.textContent = 'R$ 0,00';
+        btnAvancarCheckout.style.display = 'none';
+    }
+}
 
         // Função para adicionar listeners aos botões de controle de quantidade e remover
         function addEventListenersToCartItems() {

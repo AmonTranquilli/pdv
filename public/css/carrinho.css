@@ -80,116 +80,119 @@
         .carrinho-vazio .btn-continuar:hover {
             background-color: #E64A19;
         }
+        /* ====================================================== */
+/* === CÓDIGO FINAL E COMPLETO PARA O LAYOUT DO CARRINHO === */
+/* ====================================================== */
 
-        /* Novo estilo para os itens do carrinho (cards) */
-        .carrinho-item-card {
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center; /* Centraliza verticalmente a imagem e o texto */
-            padding: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-        .carrinho-item-card .item-image {
-            width: 70px; /* Imagem ligeiramente menor */
-            height: 70px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-right: 15px;
-            flex-shrink: 0; /* Não permite que a imagem encolha */
-        }
-        .carrinho-item-card .item-details {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0; /* Permite que o item shrink abaixo do tamanho de seu conteúdo */
-        }
-        .carrinho-item-card .item-name {
-            font-size: 1.1em;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 3px; /* Margem reduzida */
-            white-space: normal; /* Permite que o texto quebre linha */
-            word-break: break-word; /* Força a quebra de palavras longas */
-        }
-        .carrinho-item-card .item-obs,
-        .carrinho-item-card .item-adicionais {
-            font-size: 0.8em; /* Fonte ligeiramente menor */
-            color: #777;
-            margin-bottom: 3px; /* Margem reduzida */
-            display: block;
-            white-space: normal; /* Permite que o texto quebre linha */
-            word-break: break-word; /* Força a quebra de palavras longas */
-        }
-        .carrinho-item-card .item-price {
-            font-size: 1em; /* Preço ligeiramente menor */
-            font-weight: bold;
-            color: #FF5722;
-            margin-top: 8px; /* Margem reduzida */
-        }
+/* O contêiner principal de cada item do carrinho */
+.carrinho-item-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 15px;
+    padding: 15px;
+    display: flex;
+    align-items: center; /* Alinha verticalmente: imagem, bloco de texto e bloco de ações */
+    gap: 15px; /* Espaço entre a imagem e o resto do conteúdo */
+}
 
-        .carrinho-item-card .item-actions {
-            display: flex;
-            flex-direction: column; /* Empilha o controle de quantidade e o botão de remover */
-            align-items: flex-end; /* Alinha as ações à direita */
-            gap: 5px; /* Espaçamento reduzido */
-            margin-left: auto; /* Empurra para a direita */
-            flex-shrink: 0;
-        }
-        .carrinho-item-card .quantidade-controle {
-            display: flex;
-            align-items: center;
-            background-color: #f0f0f0;
-            border-radius: 20px; /* Botões mais arredondados */
-            overflow: hidden;
-            padding: 0px; /* Removido padding extra para compactar */
-        }
-        .carrinho-item-card .quantidade-controle button {
-            background-color: #f0f0f0;
-            border: none;
-            width: 30px; /* Botões ligeiramente menores */
-            height: 30px;
-            font-size: 1.1em; /* Tamanho da fonte ajustado */
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            box-sizing: border-box;
-            color: #333;
-        }
-        .carrinho-item-card .quantidade-controle button:hover:not(:disabled) {
-            background-color: #e0e0e0;
-        }
-        .carrinho-item-card .quantidade-controle button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .carrinho-item-card .quantidade-controle span {
-            font-weight: bold;
-            min-width: 20px; /* Largura mínima ligeiramente menor */
-            text-align: center;
-            font-size: 0.9em; /* Tamanho da fonte ajustado */
-            padding: 0 2px; /* Pequeno padding horizontal para o número */
-            color: #333;
-        }
-        .carrinho-item-card .btn-remover-item {
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 1.1em; /* Ícone ligeiramente menor */
-            cursor: pointer;
-            transition: color 0.2s ease;
-            padding: 3px; /* Padding menor */
-        }
-        .carrinho-item-card .btn-remover-item:hover {
-            color: #dc3545;
-        }
+/* Imagem do produto */
+.carrinho-item-card .item-image {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
 
+/* Bloco de detalhes (ocupa o espaço do meio) */
+.carrinho-item-card .item-details {
+    flex-grow: 1; /* Faz esta coluna crescer e ocupar o espaço vago */
+    min-width: 0;
+}
+
+.carrinho-item-card .item-name {
+    font-size: 1.1em;
+    font-weight: 600;
+    display: block;
+}
+
+.carrinho-item-card .item-price {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #FF5722;
+    margin-top: 8px;
+    display: block;
+}
+
+/* Bloco de ações (ocupa o espaço da direita) */
+.carrinho-item-card .item-actions {
+    display: flex;
+    flex-direction: column; /* <-- Empilha os itens verticalmente */
+    align-items: flex-end;  /* <-- Alinha a pilha à direita */
+    gap: 10px;              /* <-- Espaço entre o controle de qtd e a lixeira */
+}
+
+.carrinho-item-card .quantidade-controle {
+    display: flex;
+    align-items: center;
+    background-color: #f0f0f0;
+    border-radius: 20px;
+}
+
+.carrinho-item-card .quantidade-controle button {
+    background-color: transparent;
+    border: none;
+    width: 30px;
+    height: 30px;
+    font-size: 1.2em;
+    cursor: pointer;
+}
+
+.carrinho-item-card .quantidade-controle button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.carrinho-item-card .quantidade-controle span {
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+.carrinho-item-card .btn-remover-item {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 1.2em;
+    cursor: pointer;
+}
+
+.carrinho-item-card .btn-remover-item:hover {
+    color: #dc3545;
+}
+
+
+/* Estilos para a lista de detalhes (que vai aparecer em breve) */
+.item-options-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 8px 0 0 0;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.item-options-list li {
+    margin-bottom: 4px;
+}
+
+.item-obs {
+    font-size: 0.9em;
+    color: #777;
+    margin-top: 8px;
+    font-style: italic;
+}
         /* Botão "Adicionar mais produtos" */
         .btn-add-more-products {
             display: block;
@@ -815,4 +818,5 @@
                 padding: 10px 20px;
                 font-size: 0.9em;
             }
+            
         }

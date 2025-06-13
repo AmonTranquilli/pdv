@@ -131,7 +131,7 @@ $conn->close();
                                 <img src="<?= htmlspecialchars($caminhoImagemProduto) ?>" alt="<?= htmlspecialchars($produto['nome']) ?>" class="product-image" onerror="this.onerror=null;this.src='<?= $basePath ?>public/img/default-product.png';" />
                                 <div class="product-info">
                                     <h3 class="product-name"><?= $nomeProduto ?></h3>
-                                    <p class="product-description"><?= htmlspecialchars(mb_strimwidth($produto['descricao'], 0, 70, '...')) ?></p>
+                                    <p class="product-description"><?= htmlspecialchars($produto['descricao']) ?></p>
                                     <div class="product-actions">
                                         <span class="product-price">R$ <?= number_format($produto['preco'], 2, ',', '.') ?></span>
                                     </div>
@@ -147,7 +147,7 @@ $conn->close();
 
 <div id="floating-cart-summary" class="floating-cart-summary oculto">
     <div class="summary-info">
-        <span id="summary-item-count">0 item</span>
+        <span id="summary-item-count">0 item/</span>
         <span id="summary-total">R$ 0,00</span>
     </div>
     <a href="carrinho.php" class="btn-view-cart">Ver carrinho</a>

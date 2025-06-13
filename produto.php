@@ -136,9 +136,9 @@ $conn->close();
         background-color: #fff;
     }
     .hero-image {
-        flex: 0 0 110px;
-        width: 110px;
-        height: 110px;
+        flex: 0 0 140px;
+        width: 150px;
+        height: 150px;
     }
     .hero-image img {
         width: 100%;
