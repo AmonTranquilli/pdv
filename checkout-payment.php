@@ -113,6 +113,36 @@ $conn->close();
             .coupon-input-group { flex-direction: column; }
             .coupon-input-group button { width: 100%; }
         }
+        .order-summary-item {
+    align-items: flex-start;
+}
+
+/* Div que agrupa nome e detalhes, para ocupar o espaço disponível */
+.item-details-summary {
+    flex-grow: 1;
+    padding-right: 15px; /* Espaço para não colar no preço */
+}
+
+/* Estilo para a lista de opções (combos, adicionais) */
+.item-options-list-summary {
+    list-style: none;
+    padding-left: 10px; /* Leve indentação */
+    margin: 8px 0 0 0;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.item-options-list-summary li {
+    margin-bottom: 4px;
+}
+
+/* Estilo para as observações */
+.item-obs-summary {
+    margin: 8px 0 0 10px;
+    font-size: 0.9em;
+    color: #777;
+    font-style: italic;
+}
     </style>
 </head>
 <body>
@@ -137,13 +167,27 @@ $conn->close();
         <div class="section-box order-summary">
             <h2><i class="fas fa-shopping-cart"></i> Resumo do Pedido</h2>
             <ul class="order-summary-items">
-                <?php foreach ($carrinho as $item): ?>
-                    <li class="order-summary-item">
-                        <span class="item-name"><?= htmlspecialchars($item['quantidade']) ?>x <?= htmlspecialchars($item['nome_produto'] ?? $item['nome']) ?></span>
-                        <span class="item-price">R$ <?= number_format($item['preco_total'], 2, ',', '.') ?></span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+    <?php foreach ($carrinho as $item): ?>
+        <li class="order-summary-item">
+            <div class="item-details-summary">
+                <span class="item-name"><?= htmlspecialchars($item['quantidade']) ?>x <?= htmlspecialchars($item['nome']) ?></span>
+
+                <?php if (!empty($item['opcoes'])): ?>
+                    <ul class="item-options-list-summary">
+                        <?php foreach ($item['opcoes'] as $opcao): ?>
+                            <li>+ <?= htmlspecialchars($opcao['nome']) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+
+                <?php if (!empty($item['obs'])): ?>
+                    <p class="item-obs-summary"><b>Obs:</b> <?= htmlspecialchars($item['obs']) ?></p>
+                <?php endif; ?>
+            </div>
+            <span class="item-price">R$ <?= number_format($item['preco_total'], 2, ',', '.') ?></span>
+        </li>
+    <?php endforeach; ?>
+</ul>
             <div class="order-summary-totals">
                 <div class="order-summary-line">
                     <span>Subtotal:</span>
