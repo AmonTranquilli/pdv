@@ -194,34 +194,40 @@ document.addEventListener('DOMContentLoaded', () => {
         return; // Não faz nada se não houver seções ou botões
     }
 
-    // Função para limpar a classe 'active' de todos os botões
-    function clearActive() {
-        buttons.forEach(btn => btn.classList.remove('active'));
-    }
+    // Mantém o controle de qual botão está ativo no momento
+    let currentActiveButton = null;
 
-    // --- LÓGICA DE ATIVAÇÃO POR SCROLL (INTERSECTION OBSERVER) ---
+    const setActiveButton = (button) => {
+        if (button === currentActiveButton) {
+            return; // Não faz nada se o botão já for o ativo
+        }
+        // Remove a classe 'active' do botão anterior
+        if (currentActiveButton) {
+            currentActiveButton.classList.remove('active');
+        }
+        // Adiciona a classe 'active' ao novo botão
+        if (button) {
+            button.classList.add('active');
+            currentActiveButton = button;
+        }
+    };
+
+    // --- LÓGICA DE ATIVAÇÃO POR SCROLL (INTERSECTION OBSERVER) MELHORADA ---
 
     // Opções do Observer
     const observerOptions = {
-        // rootMargin: Usa a altura do cabeçalho para que a ativação ocorra
-        // quando a seção aparece ABAIXO do cabeçalho, e não atrás dele.
-        // IMPORTANTE: Ajuste o valor -140px se a altura do seu cabeçalho mudar.
-        rootMargin: `-${fixedHeader.offsetHeight + 10}px 0px 0px 0px`,
-        threshold: 0.1 // Ativa quando 10% da seção está visível
+        // Define a "linha de ativação" um pouco abaixo do cabeçalho
+        rootMargin: `-${fixedHeader ? fixedHeader.offsetHeight : 150}px 0px -60% 0px`,
+        threshold: 0
     };
 
-    // A função que será chamada quando uma seção entrar ou sair da tela
+    // A função que será chamada quando uma seção cruzar a linha de ativação
     const handleIntersect = (entries) => {
         entries.forEach(entry => {
-            // entry.isIntersecting é 'true' quando o elemento está visível
             if (entry.isIntersecting) {
                 const categoryId = entry.target.getAttribute('data-category-id');
-                const activeButton = document.querySelector(`.category-button[data-category-id="${categoryId}"]`);
-                
-                if (activeButton) {
-                    clearActive(); // Limpa o botão que estava ativo antes
-                    activeButton.classList.add('active'); // Ativa o novo botão
-                }
+                const buttonToActivate = document.querySelector(`.category-button[data-category-id="${categoryId}"]`);
+                setActiveButton(buttonToActivate);
             }
         });
     };
@@ -241,6 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const targetSection = document.querySelector(`.category-section[data-category-id="${categoryId}"]`);
 
             if (targetSection) {
+                // Desativa temporariamente o observer de scroll para evitar conflitos durante a rolagem suave
+                observer.disconnect();
+
                 const headerHeight = fixedHeader ? fixedHeader.offsetHeight : 0;
                 const targetPosition = targetSection.offsetTop - headerHeight - 10;
 
@@ -249,19 +258,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     behavior: 'smooth'
                 });
                 
-                // O observer cuidará de ativar o botão, mas podemos fazer manualmente
-                // para uma resposta instantânea ao clique.
-                clearActive();
-                button.classList.add('active');
+                // Ativa o botão clicado imediatamente
+                setActiveButton(button);
+
+                // Reativa o observer após a rolagem do clique terminar
+                setTimeout(() => {
+                    sections.forEach(section => observer.observe(section));
+                }, 1000); // 1 segundo é geralmente suficiente para a rolagem suave
             }
         });
     });
 
     // Ativa a primeira categoria ao carregar a página por padrão
     if (buttons.length > 0) {
-        buttons[0].classList.add('active');
+        setActiveButton(buttons[0]);
     }
 });
+</script>
 </script>
 
 </body>

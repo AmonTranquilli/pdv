@@ -113,10 +113,7 @@ body {
 /* Ajuste para o conteúdo principal */
 /* Isso empurra o conteúdo dos produtos para baixo, 
    evitando que ele comece escondido atrás do cabeçalho fixo */
-body {
-    /* IMPORTANTE: Ajuste este valor para a altura exata do seu cabeçalho */
-    padding-top: 150px; 
-}
+
 
 /* Conteúdo interno da barra superior */
 .top-bar-content {
@@ -228,9 +225,10 @@ body {
 
 /* Main Content Area */
 .main-content-area {
-    padding: 20px 0 80px 0; /* Padding inferior para a barra de navegação */
     max-width: 1200px; /* Aumentado para permitir cards maiores */
-    margin: 0 auto;
+    margin-top: 150px;
+    margin-right: auto;
+    margin-left: auto;
 }
 
 /* Campo de busca (removido do HTML, mas mantendo a classe caso seja útil no futuro ou para JS) */

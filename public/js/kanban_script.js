@@ -214,17 +214,31 @@ async function abrirModalDetalhes(idPedido) {
         const dataPedidoObj = new Date(detalhes.data_pedido);
         let enderecoCompleto = `${escapeHTML(detalhes.endereco_entrega || '')}, ${escapeHTML(detalhes.numero_entrega || 'S/N')}`;
         if (detalhes.bairro_entrega) enderecoCompleto += `, Bairro: ${escapeHTML(detalhes.bairro_entrega)}`;
-        if (detalhes.complemento_entrega) enderecoCompleto += ` - ${escapeHTML(detalhes.complemento_entrega)}`;
-        if (detalhes.referencia_entrega) enderecoCompleto += ` (Ref: ${escapeHTML(detalhes.referencia_entrega)})`;
         
+        // --- LÓGICA DE EXIBIÇÃO DE ITENS CORRIGIDA ---
         let itensHtml = '<li>Nenhum item encontrado.</li>';
         if (detalhes.itens && detalhes.itens.length > 0) {
             itensHtml = detalhes.itens.map(item => {
-                let html = `<li>${escapeHTML(item.quantidade)}x ${escapeHTML(item.nome_produto)} - R$ ${parseFloat(item.preco_unitario).toFixed(2).replace('.', ',')}`;
-                if (item.observacao_item) html += `<br><small><em>Obs: ${escapeHTML(item.observacao_item)}</em></small>`;
-                if (item.adicionais && item.adicionais.length > 0) {
-                    html += `<br><small>Adicionais: ${item.adicionais.map(ad => `${escapeHTML(ad.nome_adicional)}`).join(', ')}</small>`;
+                // Calcula o preço total para esta linha de item
+                const precoTotalLinha = parseFloat(item.preco_unitario) * item.quantidade;
+
+                // Monta o HTML do item
+                let html = `<li>
+                                <div class="modal-item-line">
+                                    <strong>${escapeHTML(item.quantidade)}x ${escapeHTML(item.nome_produto)}</strong>
+                                    <span class="modal-item-price">R$ ${precoTotalLinha.toFixed(2).replace('.', ',')}</span>
+                                </div>`;
+                
+                // Adiciona os detalhes das opções (Combo, Adicionais, etc.) se existirem
+                if (item.detalhes_opcoes) {
+                    html += `<div class="modal-item-details">${item.detalhes_opcoes}</div>`;
                 }
+
+                // Adiciona as observações do cliente, se existirem
+                if (item.observacao_item) {
+                    html += `<small class="modal-item-obs"><em>Obs: ${escapeHTML(item.observacao_item)}</em></small>`;
+                }
+                
                 html += `</li>`;
                 return html;
             }).join('');
@@ -235,25 +249,18 @@ async function abrirModalDetalhes(idPedido) {
             <p><strong>Cliente:</strong> ${escapeHTML(detalhes.nome_cliente || 'N/A')}</p>
             <p><strong>Telefone:</strong> ${escapeHTML(detalhes.telefone_cliente || 'N/A')}</p>
             <p><strong>Endereço:</strong> ${enderecoCompleto}</p>
-            <p><strong>Data:</strong> ${dataPedidoObj.toLocaleDateString('pt-BR')} ${dataPedidoObj.toLocaleTimeString('pt-BR')}</p>
-            <p><strong>Total:</strong> R$ ${parseFloat(detalhes.total_pedido || 0).toFixed(2).replace('.', ',')}</p>
+            <p><strong>Total do Pedido:</strong> R$ ${parseFloat(detalhes.total_pedido || 0).toFixed(2).replace('.', ',')}</p>
             <p><strong>Pagamento:</strong> ${escapeHTML(detalhes.forma_pagamento || 'N/A')}</p>
-            <p id="paragrafoTrocoPara" style="display:none;"><strong>Troco Para:</strong> <span id="modalTrocoPara"></span></p>
-            <p><strong>Observações:</strong> ${escapeHTML(detalhes.observacoes_pedido || 'Nenhuma.')}</p>
+            <hr>
             <p><strong>Itens:</strong></p>
-            <ul id="modalListaItens">${itensHtml}</ul>
+            <ul class="modal-lista-itens">${itensHtml}</ul>
         `;
         
-        if (detalhes.troco_para > 0 && detalhes.forma_pagamento.toLowerCase() === 'dinheiro') {
-            document.getElementById('paragrafoTrocoPara').style.display = 'block';
-            document.getElementById('modalTrocoPara').textContent = `R$ ${parseFloat(detalhes.troco_para).toFixed(2).replace('.', ',')}`;
-        }
-
         const modalBtnAceitar = document.getElementById('modalBtnAceitar');
         const modalBtnCancelar = document.getElementById('modalBtnCancelar');
         if(modalBtnAceitar && modalBtnCancelar) {
             modalBtnAceitar.style.display = detalhes.status === 'pendente' ? 'inline-block' : 'none';
-            modalBtnCancelar.style.display = ['pendente', 'preparando', 'em_entrega'].includes(detalhes.status) ? 'inline-block' : 'none';
+            modalBtnCancelar.style.display = ['pendente', 'preparando'].includes(detalhes.status) ? 'inline-block' : 'none';
         }
 
     } catch (error) {

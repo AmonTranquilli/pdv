@@ -295,3 +295,39 @@ body.kanban-page-active {
     .modal-content h2 { font-size: 1.4em; }
     #modalCorpoDetalhes p strong { min-width: auto; display: block; margin-bottom: 3px; }
 }
+/* Adicione no final de kanban_style.css */
+
+.modal-lista-itens {
+    list-style: none;
+    padding-left: 0;
+}
+.modal-lista-itens li {
+    padding: 8px 0;
+    border-bottom: 1px dotted #ccc;
+}
+.modal-lista-itens li:last-child {
+    border-bottom: none;
+}
+.modal-item-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1em;
+}
+.modal-item-price {
+    font-weight: bold;
+}
+.modal-item-details {
+    font-size: 0.9em;
+    color: #555;
+    padding-left: 15px;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+.modal-item-obs {
+    font-size: 0.9em;
+    color: #777;
+    font-style: italic;
+    padding-left: 15px;
+    margin-top: 5px;
+    display: block;
+}

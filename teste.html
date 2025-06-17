@@ -1,0 +1,78 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Teste Responsivo iOS</title>
+  <style>
+    :root {
+      --primary-color: #FF5722;
+      --secondary-color: #4CAF50;
+      --background-light: #ffffff;
+      --background-dark: #f0f2f5;
+      --text-dark: #333;
+      --text-light: #fff;
+    }
+    html {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      background-color: var(--background-dark);
+    }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      padding-top: calc(100px + env(safe-area-inset-top));
+      padding-bottom: calc(80px + env(safe-area-inset-bottom));
+      background-color: var(--background-dark);
+      color: var(--text-dark);
+    }
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--primary-color);
+      color: var(--text-light);
+      padding: 20px;
+      text-align: center;
+      z-index: 1000;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: var(--background-light);
+      padding: 20px;
+      text-align: center;
+      border-top: 1px solid #ccc;
+      z-index: 1000;
+    }
+    .products {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 20px;
+    }
+    .product-card {
+      background: var(--background-light);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">Topo Fixo</div>
+  <div class="products">
+    <div class="product-card">Produto 1</div>
+    <div class="product-card">Produto 2</div>
+    <div class="product-card">Produto 3</div>
+    <div class="product-card">Produto 4</div>
+    <div class="product-card">Produto 5</div>
+  </div>
+  <div class="bottom-nav">Barra Inferior Fixa</div>
+</body>
+</html>

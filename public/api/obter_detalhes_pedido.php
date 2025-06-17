@@ -13,17 +13,22 @@ if ($idPedido <= 0) {
 $response = ['erro' => true, 'mensagem' => 'Pedido não encontrado.']; // Resposta padrão
 
 try {
-    // 1. Buscar os detalhes principais do pedido
+    // --- CONSULTA SQL CORRIGIDA COM LEFT JOIN ---
+    // Esta consulta agora busca os dados do pedido e os dados mais recentes do cliente.
     $sqlPedido = "SELECT 
                     p.id,
                     p.id_cliente,
-                    p.nome_cliente,
-                    p.telefone_cliente,
-                    p.endereco_entrega,
-                    p.numero_entrega,
-                    p.bairro_entrega,
-                    p.complemento_entrega,
-                    p.referencia_entrega,
+                    
+                    -- Usa o dado atualizado da tabela 'clientes', se não encontrar, usa o que foi salvo no pedido.
+                    COALESCE(c.nome, p.nome_cliente) as nome_cliente,
+                    COALESCE(c.telefone, p.telefone_cliente) as telefone_cliente,
+                    COALESCE(c.endereco, p.endereco_entrega) as endereco_entrega,
+                    COALESCE(c.ncasa, p.numero_entrega) as numero_entrega,
+                    COALESCE(c.bairro, p.bairro_entrega) as bairro_entrega,
+                    COALESCE(c.complemento, p.complemento_entrega) as complemento_entrega,
+                    COALESCE(c.ponto_referencia, p.referencia_entrega) as referencia_entrega,
+                    
+                    -- Campos originais do pedido
                     p.data_pedido,
                     p.total_pedido,
                     p.forma_pagamento,
@@ -32,6 +37,7 @@ try {
                     p.observacoes_pedido,
                     p.status
                   FROM pedidos p
+                  LEFT JOIN clientes c ON p.id_cliente = c.id
                   WHERE p.id = ?";
     
     $stmtPedido = $conn->prepare($sqlPedido);
@@ -43,21 +49,22 @@ try {
     $resultPedido = $stmtPedido->get_result();
     
     if ($pedidoDetails = $resultPedido->fetch_assoc()) {
-        $response = $pedidoDetails; // Começa a montar a resposta com os detalhes do pedido
-        $response['erro'] = false; // Indica que o pedido foi encontrado
+        $response = $pedidoDetails;
+        $response['erro'] = false;
         $response['mensagem'] = 'Detalhes do pedido carregados.';
         $response['itens'] = [];
 
-        // 2. Buscar os itens do pedido
+        // Buscar os itens do pedido (lógica mantida, pois já está correta)
         $sqlItens = "SELECT 
-                        ip.id as id_item_pedido, 
-                        ip.id_produto, 
-                        ip.nome_produto, 
-                        ip.quantidade, 
-                        ip.preco_unitario, 
-                        ip.observacao_item
-                     FROM itens_pedido ip
-                     WHERE ip.id_pedido = ?";
+                        id as id_item_pedido, 
+                        id_produto, 
+                        nome_produto, 
+                        quantidade, 
+                        preco_unitario, 
+                        observacao_item,
+                        detalhes_opcoes
+                     FROM itens_pedido
+                     WHERE id_pedido = ?";
         
         $stmtItens = $conn->prepare($sqlItens);
         if ($stmtItens === false) {
@@ -67,39 +74,11 @@ try {
         $stmtItens->execute();
         $resultItens = $stmtItens->get_result();
         
-        $itensDoPedido = [];
-        while ($item = $resultItens->fetch_assoc()) {
-            $item['adicionais'] = []; // Prepara array para os adicionais deste item
-
-            // 3. Buscar os adicionais para cada item
-            $sqlAdicionais = "SELECT 
-                                a.nome as nome_adicional,
-                                aip.quantidade as quantidade_adicional, /* Pode ser útil no futuro */
-                                aip.preco_unitario as preco_adicional 
-                              FROM adicionais_item_pedido aip
-                              JOIN adicionais a ON aip.id_adicional = a.id
-                              WHERE aip.id_item_pedido = ?";
-            
-            $stmtAdicionais = $conn->prepare($sqlAdicionais);
-            if ($stmtAdicionais === false) {
-                throw new Exception("Erro ao preparar consulta dos adicionais: " . $conn->error);
-            }
-            $stmtAdicionais->bind_param('i', $item['id_item_pedido']);
-            $stmtAdicionais->execute();
-            $resultAdicionais = $stmtAdicionais->get_result();
-            
-            while ($adicional = $resultAdicionais->fetch_assoc()) {
-                $item['adicionais'][] = $adicional;
-            }
-            $stmtAdicionais->close();
-            $itensDoPedido[] = $item;
-        }
-        $response['itens'] = $itensDoPedido;
+        $response['itens'] = $resultItens->fetch_all(MYSQLI_ASSOC);
         $stmtItens->close();
 
-    } else {
-        // Pedido não encontrado, a resposta padrão já está configurada
     }
+    
     $stmtPedido->close();
 
 } catch (Exception $e) {

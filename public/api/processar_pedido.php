@@ -59,22 +59,28 @@ try {
     $stmt_pedido->close();
 
     // Insere Itens e Atualiza Estoque
-    $stmt_item = $conn->prepare("INSERT INTO itens_pedido (id_pedido, id_produto, nome_produto, quantidade, preco_unitario, observacao_item) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt_adicional = $conn->prepare("INSERT INTO adicionais_item_pedido (id_item_pedido, id_adicional, quantidade, preco_unitario) VALUES (?, ?, ?, ?)");
+    $stmt_item = $conn->prepare("INSERT INTO itens_pedido (id_pedido, id_produto, nome_produto, quantidade, preco_unitario, observacao_item, detalhes_opcoes) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $stmt_update_estoque = $conn->prepare("UPDATE produtos SET estoque = estoque - ? WHERE id = ? AND controla_estoque = 1");
 
     foreach ($carrinho as $item) {
-        $stmt_item->bind_param("iisids", $pedido_id, $item['id'], $item['nome'], $item['quantidade'], $item['preco_unitario'], $item['obs']);
-        if (!$stmt_item->execute()) throw new Exception("Erro ao inserir item: " . $item['nome']);
-        $item_pedido_id = $conn->insert_id;
-
-        if (!empty($item['adicionais']) && is_array($item['adicionais'])) {
-            foreach ($item['adicionais'] as $adicional) {
-                $stmt_adicional->bind_param("iiid", $item_pedido_id, $adicional['id'], 1, $adicional['preco']);
-                if (!$stmt_adicional->execute()) throw new Exception("Erro ao inserir adicional.");
+        // 1. Prepara um texto com todos os detalhes do item
+        $detalhes_texto_final = '';
+        $detalhes_array = [];
+        if (!empty($item['opcoes']) && is_array($item['opcoes'])) {
+            foreach ($item['opcoes'] as $opcao) {
+                $detalhes_array[] = '+ ' . htmlspecialchars($opcao['nome']);
             }
         }
+        // Junta todos os detalhes com uma quebra de linha HTML para exibir depois
+        $detalhes_texto_final = implode('<br>', $detalhes_array);
 
+        // 2. Insere o item no banco de dados, agora com os detalhes na nova coluna
+        $stmt_item->bind_param("iisidss", $pedido_id, $item['id'], $item['nome'], $item['quantidade'], $item['preco_unitario'], $item['obs'], $detalhes_texto_final);
+        if (!$stmt_item->execute()) {
+            throw new Exception("Erro ao inserir item do pedido: " . $stmt_item->error);
+        }
+        
+        // 3. Atualiza o estoque do produto principal (lógica mantida)
         $stmt_check_estoque = $conn->prepare("SELECT estoque, controla_estoque FROM produtos WHERE id = ?");
         $stmt_check_estoque->bind_param("i", $item['id']);
         $stmt_check_estoque->execute();
@@ -82,17 +88,20 @@ try {
         $stmt_check_estoque->close();
 
         if ($produto_info && $produto_info['controla_estoque'] == 1) {
-            if ($produto_info['estoque'] < $item['quantidade']) { throw new Exception("Estoque insuficiente para: " . $item['nome']); }
+            if ($produto_info['estoque'] < $item['quantidade']) {
+                throw new Exception("Estoque insuficiente para: " . $item['nome']);
+            }
             $stmt_update_estoque->bind_param("ii", $item['quantidade'], $item['id']);
-            if (!$stmt_update_estoque->execute()) { throw new Exception("Erro ao atualizar estoque para: " . $item['nome']); }
+            if (!$stmt_update_estoque->execute()) {
+                throw new Exception("Erro ao atualizar estoque para: " . $item['nome']);
+            }
         }
     }
     $stmt_item->close();
-    $stmt_adicional->close();
     $stmt_update_estoque->close();
+    // --- FIM DA SEÇÃO CORRIGIDA ---
 
     $conn->commit();
-
     // --- CÓDIGO DO BOT (COM A CORREÇÃO FINAL) ---
     $itens_params = [];
     foreach ($carrinho as $item) {

@@ -16,7 +16,7 @@ if ($resultConfig && $resultConfig->num_rows > 0) {
     $taxa_entrega_config = (float)($config['taxa_entrega'] ?? 0.00);
 }
 
-if ($pedido_id) {
+    if ($pedido_id) {
     // Busca os detalhes do pedido principal
     $stmt_pedido = $conn->prepare("SELECT * FROM pedidos WHERE id = ?");
     $stmt_pedido->bind_param("i", $pedido_id);
@@ -26,23 +26,13 @@ if ($pedido_id) {
     $stmt_pedido->close();
 
     if ($pedido_detalhes) {
-        // Busca os itens do pedido
-        $stmt_itens = $conn->prepare("SELECT ip.*, p.imagem FROM itens_pedido ip JOIN produtos p ON ip.id_produto = p.id WHERE ip.id_pedido = ?");
+        // --- LÓGICA DE BUSCA DE ITENS CORRIGIDA ---
+        // Busca os itens do pedido. A coluna 'detalhes_opcoes' já vem com o 'ip.*'
+        $stmt_itens = $conn->prepare("SELECT ip.* FROM itens_pedido ip WHERE ip.id_pedido = ?");
         $stmt_itens->bind_param("i", $pedido_id);
         $stmt_itens->execute();
         $result_itens = $stmt_itens->get_result();
-
-        while ($item = $result_itens->fetch_assoc()) {
-            // Busca os adicionais para cada item do pedido
-            $stmt_adicionais = $conn->prepare("SELECT a.nome, a.preco FROM adicionais_item_pedido aip JOIN adicionais a ON aip.id_adicional = a.id WHERE aip.id_item_pedido = ?");
-            $stmt_adicionais->bind_param("i", $item['id']);
-            $stmt_adicionais->execute();
-            $result_adicionais = $stmt_adicionais->get_result();
-            $item['adicionais'] = $result_adicionais->fetch_all(MYSQLI_ASSOC);
-            $stmt_adicionais->close();
-
-            $itens_pedido[] = $item;
-        }
+        $itens_pedido = $result_itens->fetch_all(MYSQLI_ASSOC); // Pega todos os itens de uma só vez
         $stmt_itens->close();
     }
 }
@@ -316,22 +306,29 @@ $conn->close();
                     <h2><i class="fas fa-hamburger"></i> Itens do Pedido</h2>
                     <?php foreach ($itens_pedido as $item): ?>
                         <li class="order-item">
-                            <div class="order-item-info">
-                                <strong><?= htmlspecialchars($item['quantidade']) ?>x <?= htmlspecialchars($item['nome_produto']) ?></strong>
-                                <?php if (!empty($item['observacao_item'])): ?>
-                                    <small>Obs: <?= htmlspecialchars($item['observacao_item']) ?></small>
-                                <?php endif; ?>
-                                <?php if (!empty($item['adicionais'])): ?>
-                                    <div class="adicionais-list">
-                                        Adicionais:
-                                        <?php foreach ($item['adicionais'] as $adicional): ?>
-                                            <span>- <?= htmlspecialchars($adicional['nome']) ?> (R$ <?= number_format($adicional['preco'], 2, ',', '.') ?>)</span>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            <span class="order-item-price">R$ <?= number_format($item['quantidade'] * $item['preco_unitario'] + array_sum(array_column($item['adicionais'], 'preco')), 2, ',', '.') ?></span>
-                        </li>
+    <div class="order-item-info">
+        <strong><?= htmlspecialchars($item['quantidade']) ?>x <?= htmlspecialchars($item['nome_produto']) ?></strong>
+
+        <?php // Exibe os detalhes que salvamos do processar_pedido.php
+        if (!empty($item['detalhes_opcoes'])): ?>
+            <div class="adicionais-list">
+                <?= nl2br($item['detalhes_opcoes']) // A função nl2br converte as quebras de linha <br> em HTML ?>
+            </div>
+        <?php endif; ?>
+
+        <?php // Exibe a observação do cliente, se houver
+        if (!empty($item['observacao_item'])): ?>
+            <small>Obs: <?= htmlspecialchars($item['observacao_item']) ?></small>
+        <?php endif; ?>
+    </div>
+
+    <?php
+        // O preco_unitario já inclui o valor de todos os adicionais.
+        // O preço final da linha é simplesmente quantidade * preco_unitario.
+        $preco_final_item = $item['quantidade'] * $item['preco_unitario'];
+    ?>
+    <span class="order-item-price">R$ <?= number_format($preco_final_item, 2, ',', '.') ?></span>
+</li>
                     <?php endforeach; ?>
                 </ul>
 
