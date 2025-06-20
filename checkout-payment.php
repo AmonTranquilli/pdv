@@ -143,6 +143,33 @@ $conn->close();
     color: #777;
     font-style: italic;
 }
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px; /* Substitui a margem do h2 */
+}
+
+.section-header h2 {
+    margin: 0; /* Remove a margem padrão do h2 */
+}
+
+.btn-edit {
+    background-color: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 5px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.btn-edit:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
     </style>
 </head>
 <body>
@@ -151,7 +178,10 @@ $conn->close();
         <h1>Finalizar Pedido - Pagamento</h1>
 
         <div class="section-box client-details">
+            <div class="section-header">
             <h2><i class="fas fa-user-circle"></i> Seus Dados</h2>
+            <a href="pre-checkout.php?action=edit" class="btn-edit">EDITAR</a>
+            </div>
             <p><strong>Nome:</strong> <?= htmlspecialchars($cliente_data['nome']) ?></p>
             <p><strong>Telefone:</strong> <?= htmlspecialchars($cliente_data['telefone']) ?></p>
             <p><strong>Endereço:</strong> <?= htmlspecialchars($cliente_data['endereco']) ?>,

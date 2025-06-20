@@ -6,6 +6,14 @@ ini_set('display_errors', 1); // Ative para depuração
 
 require_once 'includes/conexao.php'; // Caminho para a conexão com o banco de dados
 
+// Verifica se o usuário veio da página de pagamento para editar os dados
+if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_SESSION['checkout_cliente_data'])) {
+    // Pula a etapa do telefone e vai direto para a de endereço
+    $step = 'address';
+    // Preenche a variável $cliente_data com os dados já salvos na sessão
+    $cliente_data = $_SESSION['checkout_cliente_data'];
+}
+
 $mensagem_erro = '';
 $mensagem_sucesso = '';
 
@@ -158,6 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $show_phone_input_step = true;
             error_log("pre-checkout.php: Erro: Dados do cliente não encontrados na sessão para 'confirm_phone_and_continue'.");
         }
+        
     } elseif ($action === 'confirm_address') {
         $nome_cliente = trim($_POST['nome_cliente']);
         $endereco_entrega = trim($_POST['endereco_entrega']);
