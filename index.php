@@ -158,7 +158,7 @@ $conn->close();
         <i class="fas fa-home"></i>
         <span>Início</span>
     </a>
-    <a href="carrinho.php" class="nav-item">
+    <a href="meus-pedidos.php" class="nav-item">
         <i class="fas fa-clipboard-list"></i>
         <span>Pedidos</span>
     </a>
