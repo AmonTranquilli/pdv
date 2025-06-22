@@ -408,3 +408,90 @@ table tr:hover {
     .header .logo-text { font-size: 1.5em; }
     .header .user-info { flex-basis: 100%; justify-content: flex-end; margin-top: 10px; }
 }
+/* ============================================== */
+/* === ESTILOS PARA A ÁREA DE NOTIFICAÇÕES === */
+/* ============================================== */
+
+.notification-area {
+    position: relative; /* Essencial para posicionar o painel e o badge */
+    margin-right: 20px; /* Espaço entre o sino e o "Olá, Amon!" */
+}
+
+.notification-bell {
+    background: none;
+    border: none;
+    font-size: 1.5em; /* Tamanho do ícone do sino */
+    color: #555;
+    cursor: pointer;
+    position: relative;
+    padding: 5px;
+}
+
+.notification-bell .badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #dc3545; /* Vermelho */
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 0.7em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+}
+
+.notifications-panel {
+    display: none; /* Começa escondido */
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    z-index: 1100;
+}
+
+.notifications-panel.ativo {
+    display: block; /* O JavaScript vai adicionar esta classe para mostrar o painel */
+}
+
+/* Estilos para os itens dentro do painel (vamos usar no futuro) */
+.notifications-panel .notification-item {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9em;
+}
+.notifications-panel .notification-item:last-child {
+    border-bottom: none;
+}
+.notifications-panel .notification-item {
+    display: block;
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    text-decoration: none;
+    color: #333;
+    transition: background-color 0.2s ease;
+}
+.notifications-panel .notification-item:last-child {
+    border-bottom: none;
+}
+.notifications-panel .notification-item:hover {
+    background-color: #f8f8f8;
+}
+.notification-item .notification-message {
+    margin: 0 0 5px 0;
+    font-size: 0.9em;
+}
+.notification-item .notification-date {
+    font-size: 0.75em;
+    color: #888;
+}

@@ -1,5 +1,6 @@
 <?php
-require_once '../includes/conexao.php'; // Inclui o arquivo de conexão com o banco de dados
+require_once '../includes/conexao.php';
+// Inclui o arquivo de conexão com o banco de dados
 
 $mensagem = '';
 $sucesso = false;
@@ -12,34 +13,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Validações básicas
     if (empty($nome_usuario) || empty($senha_digitada) || empty($confirmar_senha)) {
-        $mensagem = "Todos os campos são obrigatórios.";
+        $mensagem = 'Todos os campos são obrigatórios.';
     } elseif ($senha_digitada !== $confirmar_senha) {
-        $mensagem = "As senhas não coincidem.";
+        $mensagem = 'As senhas não coincidem.';
     } elseif (strlen($senha_digitada) < 5) {
-        $mensagem = "A senha deve ter no mínimo 5 caracteres.";
+        $mensagem = 'A senha deve ter no mínimo 5 caracteres.';
     } else {
         // Verifica se o nome de usuário já existe
-        $stmt_check = $conn->prepare("SELECT id FROM usuarios WHERE nome_usuario = ?");
-        $stmt_check->bind_param("s", $nome_usuario);
+        $stmt_check = $conn->prepare('SELECT id FROM usuarios WHERE nome_usuario = ?');
+        $stmt_check->bind_param('s', $nome_usuario);
         $stmt_check->execute();
         $stmt_check->store_result();
 
         if ($stmt_check->num_rows > 0) {
-            $mensagem = "Nome de usuário já existe. Escolha outro.";
+            $mensagem = 'Nome de usuário já existe. Escolha outro.';
         } else {
             // Gera o hash da senha
             $senha_hash = password_hash($senha_digitada, PASSWORD_DEFAULT);
 
             // Insere o novo usuário no banco de dados
-            $stmt_insert = $conn->prepare("INSERT INTO usuarios (nome_usuario, senha, nivel_acesso) VALUES (?, ?, ?)");
-            $nivel_acesso = 'admin'; // Por padrão, este script cria um usuário admin
-            $stmt_insert->bind_param("sss", $nome_usuario, $senha_hash, $nivel_acesso);
+            $stmt_insert = $conn->prepare('INSERT INTO usuarios (nome_usuario, senha, nivel_acesso) VALUES (?, ?, ?)');
+            $nivel_acesso = 'admin';
+            // Por padrão, este script cria um usuário admin
+            $stmt_insert->bind_param('sss', $nome_usuario, $senha_hash, $nivel_acesso);
 
             if ($stmt_insert->execute()) {
                 $mensagem = "Usuário '$nome_usuario' criado com sucesso! Agora você pode <a href='admin/login.php'>fazer login</a>.";
                 $sucesso = true;
             } else {
-                $mensagem = "Erro ao criar usuário: " . $stmt_insert->error;
+                $mensagem = 'Erro ao criar usuário: ' . $stmt_insert->error;
             }
             $stmt_insert->close();
         }
@@ -47,14 +49,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-$conn->close(); // Fecha a conexão com o banco de dados
+$conn->close();
+// Fecha a conexão com o banco de dados
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang='pt-BR'>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>Criar Usuário Administrador</title>
     <style>
         body {
@@ -66,6 +70,7 @@ $conn->close(); // Fecha a conexão com o banco de dados
             min-height: 100vh;
             margin: 0;
         }
+
         .container {
             background-color: #fff;
             padding: 30px;
@@ -74,18 +79,21 @@ $conn->close(); // Fecha a conexão com o banco de dados
             width: 350px;
             text-align: center;
         }
+
         h2 {
             margin-bottom: 20px;
             color: #333;
         }
-        input[type="text"],
-        input[type="password"] {
+
+        input[ type='text'],
+        input[ type='password'] {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+
         button {
             width: 100%;
             padding: 10px;
@@ -96,19 +104,23 @@ $conn->close(); // Fecha a conexão com o banco de dados
             cursor: pointer;
             font-size: 16px;
         }
+
         button:hover {
             background-color: #0056b3;
         }
+
         .mensagem {
             margin-top: 15px;
             padding: 10px;
             border-radius: 4px;
         }
+
         .mensagem.erro {
             background-color: #ffe6e6;
             color: #cc0000;
             border: 1px solid #cc0000;
         }
+
         .mensagem.sucesso {
             background-color: #e6ffe6;
             color: #008000;
@@ -116,18 +128,22 @@ $conn->close(); // Fecha a conexão com o banco de dados
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
+    <div class='container'>
         <h2>Criar Usuário Administrador</h2>
         <?php if (!empty($mensagem)) : ?>
-            <p class="mensagem <?php echo $sucesso ? 'sucesso' : 'erro'; ?>"><?php echo $mensagem; ?></p>
-        <?php endif; ?>
-        <form action="criar_admin.php" method="POST">
-            <input type="text" name="nome_usuario" placeholder="Nome de Usuário" required>
-            <input type="password" name="senha" placeholder="Senha" required>
-            <input type="password" name="confirmar_senha" placeholder="Confirmar Senha" required>
-            <button type="submit">Criar Usuário Admin</button>
+            <p class="mensagem <?php echo $sucesso ? 'sucesso' : 'erro'; ?>"><?php echo $mensagem;
+                                                                                ?></p>
+        <?php endif;
+        ?>
+        <form action='criar_admin.php' method='POST'>
+            <input type='text' name='nome_usuario' placeholder='Nome de Usuário' required>
+            <input type='password' name='senha' placeholder='Senha' required>
+            <input type='password' name='confirmar_senha' placeholder='Confirmar Senha' required>
+            <button type='submit'>Criar Usuário Admin</button>
         </form>
     </div>
 </body>
+
 </html>

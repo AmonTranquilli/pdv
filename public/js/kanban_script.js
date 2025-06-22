@@ -1,327 +1,502 @@
-document.addEventListener('DOMContentLoaded', function() {
-    carregarPedidos(); 
-    setInterval(carregarPedidos, 10000); 
+  // --- Variáveis de controle para a notificação sonora ---
+  let idsPedidosPendentesAnteriores = new Set();
+  let isPrimeiraCarga = true;
 
-    const btnFinalizarDia = document.getElementById('btnFinalizarDia');
-    if (btnFinalizarDia) {
-        btnFinalizarDia.addEventListener('click', finalizarDia);
-    }
+document.addEventListener("DOMContentLoaded", function () {
+  carregarPedidos();
+  setInterval(carregarPedidos, 10000);
 
-    const modalOverlay = document.getElementById('modalDetalhesPedido');
-    if (modalOverlay) {
-        modalOverlay.addEventListener('click', (event) => {
-            if (event.target === modalOverlay) fecharModalDetalhes();
-        });
-    }
+  const btnFinalizarDia = document.getElementById("btnFinalizarDia");
+  if (btnFinalizarDia) {
+    btnFinalizarDia.addEventListener("click", finalizarDia);
+  }
 
-    const modalBtnAceitar = document.getElementById('modalBtnAceitar');
-    if (modalBtnAceitar) {
-        modalBtnAceitar.onclick = function() {
-            if (!pedidoIdAtualModal) return;
-            showCustomConfirm(`Aceitar o pedido #${pedidoIdAtualModal} e iniciar o preparo?`, 'Confirmar Aceite', () => {
-                atualizarStatusPedido(pedidoIdAtualModal, 'preparando', true);
-            });
-        };
-    }
+  const modalOverlay = document.getElementById("modalDetalhesPedido");
+  if (modalOverlay) {
+    modalOverlay.addEventListener("click", (event) => {
+      if (event.target === modalOverlay) fecharModalDetalhes();
+    });
+  }
 
-    const modalBtnCancelar = document.getElementById('modalBtnCancelar');
-    if (modalBtnCancelar) {
-        modalBtnCancelar.onclick = function() {
-            if (!pedidoIdAtualModal) return;
-            showCustomConfirm(`Tem certeza que deseja CANCELAR o pedido #${pedidoIdAtualModal}?`, 'Confirmar Cancelamento', () => {
-                atualizarStatusPedido(pedidoIdAtualModal, 'cancelado', true);
-            }, 'error');
-        };
-    }
+  const modalBtnAceitar = document.getElementById("modalBtnAceitar");
+  if (modalBtnAceitar) {
+    modalBtnAceitar.onclick = function () {
+      if (!pedidoIdAtualModal) return;
+      showCustomConfirm(
+        `Aceitar o pedido #${pedidoIdAtualModal} e iniciar o preparo?`,
+        "Confirmar Aceite",
+        () => {
+          atualizarStatusPedido(pedidoIdAtualModal, "preparando", true);
+        }
+      );
+    };
+  }
 
-    const btnConfirmarFinalizacao = document.getElementById('btnConfirmarFinalizacao');
-    if (btnConfirmarFinalizacao) {
-        btnConfirmarFinalizacao.addEventListener('click', processarFinalizacaoEntrega);
-    }
+  const modalBtnCancelar = document.getElementById("modalBtnCancelar");
+  if (modalBtnCancelar) {
+    modalBtnCancelar.onclick = function () {
+      if (!pedidoIdAtualModal) return;
+      showCustomConfirm(
+        `Tem certeza que deseja CANCELAR o pedido #${pedidoIdAtualModal}?`,
+        "Confirmar Cancelamento",
+        () => {
+          atualizarStatusPedido(pedidoIdAtualModal, "cancelado", true);
+        },
+        "error"
+      );
+    };
+  }
+
+  const btnConfirmarFinalizacao = document.getElementById(
+    "btnConfirmarFinalizacao"
+  );
+  if (btnConfirmarFinalizacao) {
+    btnConfirmarFinalizacao.addEventListener(
+      "click",
+      processarFinalizacaoEntrega
+    );
+  }
 });
 
-let pedidoIdAtualModal = null; 
+let pedidoIdAtualModal = null;
 
-function showCustomAlert(message, title = 'Aviso', type = 'info') {
-    const modal = document.getElementById('notificationModal');
-    const modalContent = modal.querySelector('.modal-content');
-    const modalTitle = document.getElementById('notificationTitle');
-    const modalMessage = document.getElementById('notificationMessage');
-    const modalActions = document.getElementById('notificationActions');
-    modalTitle.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-times-circle'}"></i> ${title}`;
-    modalMessage.textContent = message;
-    modalContent.className = `modal-content notification-modal ${type}`;
-    modalActions.innerHTML = '<button class="btn-primary">OK</button>';
-    modal.classList.add('ativo');
-    modalActions.querySelector('button').onclick = () => modal.classList.remove('ativo');
+function showCustomAlert(message, title = "Aviso", type = "info") {
+  const modal = document.getElementById("notificationModal");
+  const modalContent = modal.querySelector(".modal-content");
+  const modalTitle = document.getElementById("notificationTitle");
+  const modalMessage = document.getElementById("notificationMessage");
+  const modalActions = document.getElementById("notificationActions");
+  modalTitle.innerHTML = `<i class="fas ${
+    type === "success" ? "fa-check-circle" : "fa-times-circle"
+  }"></i> ${title}`;
+  modalMessage.textContent = message;
+  modalContent.className = `modal-content notification-modal ${type}`;
+  modalActions.innerHTML = '<button class="btn-primary">OK</button>';
+  modal.classList.add("ativo");
+  modalActions.querySelector("button").onclick = () =>
+    modal.classList.remove("ativo");
 }
 
-function showCustomConfirm(message, title, onConfirmCallback, type = 'confirm') {
-    const modal = document.getElementById('notificationModal');
-    const modalContent = modal.querySelector('.modal-content');
-    const modalTitle = document.getElementById('notificationTitle');
-    const modalMessage = document.getElementById('notificationMessage');
-    const modalActions = document.getElementById('notificationActions');
-    modalTitle.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : 'fa-question-circle'}"></i> ${title}`;
-    modalMessage.textContent = message;
-    modalContent.className = `modal-content notification-modal ${type}`;
-    modalActions.innerHTML = `<button class="btn-aceitar">Sim</button><button class="btn-secondary">Não</button>`;
-    modal.classList.add('ativo');
-    const hideModal = () => modal.classList.remove('ativo');
-    modalActions.querySelector('.btn-aceitar').onclick = () => { hideModal(); onConfirmCallback(); };
-    modalActions.querySelector('.btn-secondary').onclick = hideModal;
+function showCustomConfirm(
+  message,
+  title,
+  onConfirmCallback,
+  type = "confirm"
+) {
+  const modal = document.getElementById("notificationModal");
+  const modalContent = modal.querySelector(".modal-content");
+  const modalTitle = document.getElementById("notificationTitle");
+  const modalMessage = document.getElementById("notificationMessage");
+  const modalActions = document.getElementById("notificationActions");
+  modalTitle.innerHTML = `<i class="fas ${
+    type === "error" ? "fa-exclamation-triangle" : "fa-question-circle"
+  }"></i> ${title}`;
+  modalMessage.textContent = message;
+  modalContent.className = `modal-content notification-modal ${type}`;
+  modalActions.innerHTML = `<button class="btn-aceitar">Sim</button><button class="btn-secondary">Não</button>`;
+  modal.classList.add("ativo");
+  const hideModal = () => modal.classList.remove("ativo");
+  modalActions.querySelector(".btn-aceitar").onclick = () => {
+    hideModal();
+    onConfirmCallback();
+  };
+  modalActions.querySelector(".btn-secondary").onclick = hideModal;
 }
 
 async function finalizarDia() {
-    showCustomConfirm("Tem certeza que deseja tentar finalizar o turno?", "Finalizar Turno", async () => {
-        try {
-            const response = await fetch('/pdv/public/api/finalizar_dia.php');
-            const resultado = await response.json();
-            if (!response.ok) throw new Error(resultado.mensagem || 'Erro desconhecido.');
-            showCustomAlert(resultado.mensagem, "Resultado", resultado.sucesso ? 'success' : 'error');
-            if (resultado.sucesso) carregarPedidos();
-        } catch (error) {
-            showCustomAlert("Erro: " + error.message, "Erro de Comunicação", "error");
-        }
-    });
+  showCustomConfirm(
+    "Tem certeza que deseja tentar finalizar o turno?",
+    "Finalizar Turno",
+    async () => {
+      try {
+        const response = await fetch("/pdv/public/api/finalizar_dia.php");
+        const resultado = await response.json();
+        if (!response.ok)
+          throw new Error(resultado.mensagem || "Erro desconhecido.");
+        showCustomAlert(
+          resultado.mensagem,
+          "Resultado",
+          resultado.sucesso ? "success" : "error"
+        );
+        if (resultado.sucesso) carregarPedidos();
+      } catch (error) {
+        showCustomAlert(
+          "Erro: " + error.message,
+          "Erro de Comunicação",
+          "error"
+        );
+      }
+    }
+  );
 }
 
+// SUBSTITUA SUA FUNÇÃO ATUAL POR ESTA VERSÃO LIMPA
 async function carregarPedidos() {
     try {
-        const response = await fetch('/pdv/public/api/obter_pedidos_kanban.php'); 
+        const response = await fetch("/pdv/public/api/obter_pedidos_kanban.php");
         const pedidos = await response.json();
-        if (pedidos.erro) { console.error(pedidos.mensagem); return; }
-        
-        document.querySelectorAll('.cards-container').forEach(c => c.innerHTML = '');
-        pedidos.forEach(pedido => {
+        if (pedidos.erro) {
+            console.error("Erro ao obter pedidos do Kanban:", pedidos.mensagem);
+            return;
+        }
+
+        // --- Lógica de Notificação Sonora (Versão Final) ---
+        const idsPendentesAtuais = new Set(
+            pedidos.filter((p) => p.status === "pendente").map((p) => p.id)
+        );
+
+        if (!isPrimeiraCarga) {
+            idsPendentesAtuais.forEach((id) => {
+                // Se o ID atual não estava na lista anterior, é um novo pedido
+                if (!idsPedidosPendentesAnteriores.has(id)) {
+                    const som = document.getElementById("somNotificacao");
+                    if (som) {
+                        som.play().catch(error => {
+                            console.error("Falha ao tocar som (bloqueado pelo navegador?):", error);
+                            alert("Novo pedido recebido!"); 
+                        });
+                    } else {
+                        console.error("Elemento de áudio #somNotificacao não encontrado.");
+                    }
+                }
+            });
+        }
+
+        idsPedidosPendentesAnteriores = idsPendentesAtuais;
+        isPrimeiraCarga = false;
+        // --- Fim da Lógica ---
+
+        // Renderiza os cards no Kanban
+        document.querySelectorAll(".cards-container").forEach((c) => (c.innerHTML = ""));
+        pedidos.forEach((pedido) => {
             const card = criarCardPedido(pedido);
-            const colunaDestino = document.getElementById(`container-${pedido.status.toLowerCase()}`);
-            if (colunaDestino) colunaDestino.appendChild(card);
+            const colunaDestino = document.getElementById(
+                `container-${pedido.status.toLowerCase()}`
+            );
+            if (colunaDestino) {
+                colunaDestino.appendChild(card);
+            }
         });
     } catch (error) {
-        console.error('Falha ao carregar pedidos:', error);
+        console.error("Falha ao carregar ou processar pedidos:", error);
     }
 }
 
 function criarCardPedido(pedido) {
-    const card = document.createElement('div');
-    card.className = 'kanban-card';
-    card.setAttribute('data-id-pedido', pedido.id);
-    const dataPedido = new Date(pedido.data_pedido);
-    const dataFormatada = `${dataPedido.toLocaleDateString('pt-BR')} ${dataPedido.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
-    let itensHtml = '<p><em>Nenhum item.</em></p>';
-    if (pedido.itens_resumo) itensHtml = '<ul>' + pedido.itens_resumo.split('; ').map(item => `<li>${escapeHTML(item)}</li>`).join('') + '</ul>';
-    card.innerHTML = `<h4>Pedido: #${pedido.id}</h4><p class="card-data">${dataFormatada}</p><p class="card-cliente">${escapeHTML(pedido.nome_cliente)}</p><p class="card-total">R$ ${parseFloat(pedido.total_pedido).toFixed(2).replace('.', ',')}</p><div class="card-itens"><strong>Itens:</strong>${itensHtml}</div><div class="card-actions">${gerarBotoesAcao(pedido.status, pedido.id)}</div>`;
-    return card;
+  const card = document.createElement("div");
+  card.className = "kanban-card";
+  card.setAttribute("data-id-pedido", pedido.id);
+  const dataPedido = new Date(pedido.data_pedido);
+  const dataFormatada = `${dataPedido.toLocaleDateString(
+    "pt-BR"
+  )} ${dataPedido.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+  let itensHtml = "<p><em>Nenhum item.</em></p>";
+  if (pedido.itens_resumo)
+    itensHtml =
+      "<ul>" +
+      pedido.itens_resumo
+        .split("; ")
+        .map((item) => `<li>${escapeHTML(item)}</li>`)
+        .join("") +
+      "</ul>";
+  card.innerHTML = `<h4>Pedido: #${
+    pedido.id
+  }</h4><p class="card-data">${dataFormatada}</p><p class="card-cliente">${escapeHTML(
+    pedido.nome_cliente
+  )}</p><p class="card-total">R$ ${parseFloat(pedido.total_pedido)
+    .toFixed(2)
+    .replace(
+      ".",
+      ","
+    )}</p><div class="card-itens"><strong>Itens:</strong>${itensHtml}</div><div class="card-actions">${gerarBotoesAcao(
+    pedido.status,
+    pedido.id
+  )}</div>`;
+  return card;
 }
 
 function gerarBotoesAcao(statusAtual, idPedido) {
-    if (statusAtual === 'pendente') return `<button onclick="abrirModalDetalhes(${idPedido})">Detalhes</button>`;
-    if (statusAtual === 'preparando') return `<button onclick="showCustomConfirm('Despachar o pedido #${idPedido}?', 'Confirmar Saída', () => atualizarStatusPedido(${idPedido}, 'em_entrega'))">P/ Entrega</button><button onclick="abrirModalDetalhes(${idPedido})">Detalhes</button>`;
-    if (statusAtual === 'em_entrega') return `<button onclick="abrirModalEntregador(${idPedido})">Finalizar</button><button onclick="abrirModalDetalhes(${idPedido})">Detalhes</button>`;
-    return '';
+  if (statusAtual === "pendente")
+    return `<button onclick="abrirModalDetalhes(${idPedido})">Detalhes</button>`;
+  if (statusAtual === "preparando")
+    return `<button onclick="showCustomConfirm('Despachar o pedido #${idPedido}?', 'Confirmar Saída', () => atualizarStatusPedido(${idPedido}, 'em_entrega'))">P/ Entrega</button><button onclick="abrirModalDetalhes(${idPedido})">Detalhes</button>`;
+  if (statusAtual === "em_entrega")
+    return `<button onclick="abrirModalEntregador(${idPedido})">Finalizar</button><button onclick="abrirModalDetalhes(${idPedido})">Detalhes</button>`;
+  return "";
 }
 
 async function abrirModalEntregador(idPedido) {
-    const modal = document.getElementById('modalEntregador');
-    const select = document.getElementById('entregadorSelect');
-    if (!modal || !select) return;
+  const modal = document.getElementById("modalEntregador");
+  const select = document.getElementById("entregadorSelect");
+  if (!modal || !select) return;
 
-    pedidoIdAtualModal = idPedido;
-    document.getElementById('entregadorModalPedidoId').textContent = `#${idPedido}`;
-    select.innerHTML = '<option value="">A carregar entregadores...</option>';
-    document.getElementById('entregadorError').style.display = 'none';
-    modal.classList.add('ativo');
-    select.focus(); // Foco no select em vez do input
+  pedidoIdAtualModal = idPedido;
+  document.getElementById(
+    "entregadorModalPedidoId"
+  ).textContent = `#${idPedido}`;
+  select.innerHTML = '<option value="">A carregar entregadores...</option>';
+  document.getElementById("entregadorError").style.display = "none";
+  modal.classList.add("ativo");
+  select.focus(); // Foco no select em vez do input
 
-    try {
-        const response = await fetch('/pdv/public/api/obter_entregadores.php');
-        const entregadores = await response.json();
-        if (entregadores.erro) throw new Error(entregadores.mensagem);
-        
-        select.innerHTML = '<option value="">-- Selecione o entregador --</option>';
-        entregadores.forEach(entregador => {
-            const option = document.createElement('option');
-            option.value = entregador.id;
-            option.textContent = `${entregador.nome} (${entregador.codigo_entregador})`;
-            select.appendChild(option);
-        });
-    } catch (error) {
-        select.innerHTML = '<option value="">Erro ao carregar</option>';
-        const errorDiv = document.getElementById('entregadorError');
-        errorDiv.textContent = error.message;
-        errorDiv.style.display = 'block';
-    }
+  try {
+    const response = await fetch("/pdv/public/api/obter_entregadores.php");
+    const entregadores = await response.json();
+    if (entregadores.erro) throw new Error(entregadores.mensagem);
+
+    select.innerHTML = '<option value="">-- Selecione o entregador --</option>';
+    entregadores.forEach((entregador) => {
+      const option = document.createElement("option");
+      option.value = entregador.id;
+      option.textContent = `${entregador.nome} (${entregador.codigo_entregador})`;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    select.innerHTML = '<option value="">Erro ao carregar</option>';
+    const errorDiv = document.getElementById("entregadorError");
+    errorDiv.textContent = error.message;
+    errorDiv.style.display = "block";
+  }
 }
 
 function fecharModalEntregador() {
-    const modal = document.getElementById('modalEntregador');
-    if (modal) modal.classList.remove('ativo');
-    pedidoIdAtualModal = null;
+  const modal = document.getElementById("modalEntregador");
+  if (modal) modal.classList.remove("ativo");
+  pedidoIdAtualModal = null;
 }
 
 async function processarFinalizacaoEntrega() {
-    if (!pedidoIdAtualModal) return;
-    const select = document.getElementById('entregadorSelect');
-    const idEntregador = select.value;
-    const errorDiv = document.getElementById('entregadorError');
+  if (!pedidoIdAtualModal) return;
+  const select = document.getElementById("entregadorSelect");
+  const idEntregador = select.value;
+  const errorDiv = document.getElementById("entregadorError");
 
-    if (!idEntregador) {
-        errorDiv.textContent = 'Por favor, selecione um entregador.';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    errorDiv.style.display = 'none';
+  if (!idEntregador) {
+    errorDiv.textContent = "Por favor, selecione um entregador.";
+    errorDiv.style.display = "block";
+    return;
+  }
+  errorDiv.style.display = "none";
 
-    try {
-        const response = await fetch('/pdv/public/api/finalizar_entrega.php', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                id_pedido: pedidoIdAtualModal,
-                id_entregador: idEntregador
-            })
-        });
-        const resultado = await response.json();
-        if (resultado.sucesso) {
-            fecharModalEntregador();
-            showCustomAlert(resultado.mensagem, "Sucesso", "success");
-            carregarPedidos();
-        } else {
-            errorDiv.textContent = resultado.mensagem;
-            errorDiv.style.display = 'block';
-        }
-    } catch (error) {
-        errorDiv.textContent = 'Erro de comunicação com o servidor.';
-        errorDiv.style.display = 'block';
+  try {
+    const response = await fetch("/pdv/public/api/finalizar_entrega.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id_pedido: pedidoIdAtualModal,
+        id_entregador: idEntregador,
+      }),
+    });
+    const resultado = await response.json();
+    if (resultado.sucesso) {
+      fecharModalEntregador();
+      showCustomAlert(resultado.mensagem, "Sucesso", "success");
+      carregarPedidos();
+    } else {
+      errorDiv.textContent = resultado.mensagem;
+      errorDiv.style.display = "block";
     }
+  } catch (error) {
+    errorDiv.textContent = "Erro de comunicação com o servidor.";
+    errorDiv.style.display = "block";
+  }
 }
 
 async function abrirModalDetalhes(idPedido) {
-    pedidoIdAtualModal = idPedido; 
-    const modal = document.getElementById('modalDetalhesPedido');
-    const modalBody = document.getElementById('modalCorpoDetalhes');
-    if (!modal || !modalBody) return;
-    
-    modalBody.innerHTML = '<p>A carregar...</p>';
-    modal.classList.add('ativo'); 
+  pedidoIdAtualModal = idPedido;
+  const modal = document.getElementById("modalDetalhesPedido");
+  const modalBody = document.getElementById("modalCorpoDetalhes");
+  if (!modal || !modalBody) return;
 
-    try {
-        const response = await fetch(`/pdv/public/api/obter_detalhes_pedido.php?id=${idPedido}`);
-        const detalhes = await response.json();
-        if (detalhes.erro) throw new Error(detalhes.mensagem);
-        
-        const dataPedidoObj = new Date(detalhes.data_pedido);
-        let enderecoCompleto = `${escapeHTML(detalhes.endereco_entrega || '')}, ${escapeHTML(detalhes.numero_entrega || 'S/N')}`;
-        if (detalhes.bairro_entrega) enderecoCompleto += `, Bairro: ${escapeHTML(detalhes.bairro_entrega)}`;
-        
-        // --- LÓGICA DE EXIBIÇÃO DE ITENS CORRIGIDA ---
-        let itensHtml = '<li>Nenhum item encontrado.</li>';
-        if (detalhes.itens && detalhes.itens.length > 0) {
-            itensHtml = detalhes.itens.map(item => {
-                // Calcula o preço total para esta linha de item
-                const precoTotalLinha = parseFloat(item.preco_unitario) * item.quantidade;
+  modalBody.innerHTML = "<p>A carregar...</p>";
+  modal.classList.add("ativo");
 
-                // Monta o HTML do item
-                let html = `<li>
+  try {
+    const response = await fetch(
+      `/pdv/public/api/obter_detalhes_pedido.php?id=${idPedido}`
+    );
+    const detalhes = await response.json();
+    if (detalhes.erro) throw new Error(detalhes.mensagem);
+
+    const dataPedidoObj = new Date(detalhes.data_pedido);
+    let enderecoCompleto = `${escapeHTML(
+      detalhes.endereco_entrega || ""
+    )}, ${escapeHTML(detalhes.numero_entrega || "S/N")}`;
+    if (detalhes.bairro_entrega)
+      enderecoCompleto += `, Bairro: ${escapeHTML(detalhes.bairro_entrega)}`;
+
+    // --- LÓGICA DE EXIBIÇÃO DE ITENS CORRIGIDA ---
+    let itensHtml = "<li>Nenhum item encontrado.</li>";
+    if (detalhes.itens && detalhes.itens.length > 0) {
+      itensHtml = detalhes.itens
+        .map((item) => {
+          // Calcula o preço total para esta linha de item
+          const precoTotalLinha =
+            parseFloat(item.preco_unitario) * item.quantidade;
+
+          // Monta o HTML do item
+          let html = `<li>
                                 <div class="modal-item-line">
-                                    <strong>${escapeHTML(item.quantidade)}x ${escapeHTML(item.nome_produto)}</strong>
-                                    <span class="modal-item-price">R$ ${precoTotalLinha.toFixed(2).replace('.', ',')}</span>
+                                    <strong>${escapeHTML(
+                                      item.quantidade
+                                    )}x ${escapeHTML(
+            item.nome_produto
+          )}</strong>
+                                    <span class="modal-item-price">R$ ${precoTotalLinha
+                                      .toFixed(2)
+                                      .replace(".", ",")}</span>
                                 </div>`;
-                
-                // Adiciona os detalhes das opções (Combo, Adicionais, etc.) se existirem
-                if (item.detalhes_opcoes) {
-                    html += `<div class="modal-item-details">${item.detalhes_opcoes}</div>`;
-                }
 
-                // Adiciona as observações do cliente, se existirem
-                if (item.observacao_item) {
-                    html += `<small class="modal-item-obs"><em>Obs: ${escapeHTML(item.observacao_item)}</em></small>`;
-                }
-                
-                html += `</li>`;
-                return html;
-            }).join('');
-        }
+          // Adiciona os detalhes das opções (Combo, Adicionais, etc.) se existirem
+          if (item.detalhes_opcoes) {
+            html += `<div class="modal-item-details">${item.detalhes_opcoes}</div>`;
+          }
 
-        document.getElementById('modalPedidoId').textContent = `#${idPedido}`;
-        modalBody.innerHTML = `
-            <p><strong>Cliente:</strong> ${escapeHTML(detalhes.nome_cliente || 'N/A')}</p>
-            <p><strong>Telefone:</strong> ${escapeHTML(detalhes.telefone_cliente || 'N/A')}</p>
+          // Adiciona as observações do cliente, se existirem
+          if (item.observacao_item) {
+            html += `<small class="modal-item-obs"><em>Obs: ${escapeHTML(
+              item.observacao_item
+            )}</em></small>`;
+          }
+
+          html += `</li>`;
+          return html;
+        })
+        .join("");
+    }
+
+    document.getElementById("modalPedidoId").textContent = `#${idPedido}`;
+    modalBody.innerHTML = `
+            <p><strong>Cliente:</strong> ${escapeHTML(
+              detalhes.nome_cliente || "N/A"
+            )}</p>
+            <p><strong>Telefone:</strong> ${escapeHTML(
+              detalhes.telefone_cliente || "N/A"
+            )}</p>
             <p><strong>Endereço:</strong> ${enderecoCompleto}</p>
-            <p><strong>Total do Pedido:</strong> R$ ${parseFloat(detalhes.total_pedido || 0).toFixed(2).replace('.', ',')}</p>
-            <p><strong>Pagamento:</strong> ${escapeHTML(detalhes.forma_pagamento || 'N/A')}</p>
+            <p><strong>Total do Pedido:</strong> R$ ${parseFloat(
+              detalhes.total_pedido || 0
+            )
+              .toFixed(2)
+              .replace(".", ",")}</p>
+            <p><strong>Pagamento:</strong> ${escapeHTML(
+              detalhes.forma_pagamento || "N/A"
+            )}</p>
             <hr>
             <p><strong>Itens:</strong></p>
             <ul class="modal-lista-itens">${itensHtml}</ul>
         `;
-        
-        const modalBtnAceitar = document.getElementById('modalBtnAceitar');
-        const modalBtnCancelar = document.getElementById('modalBtnCancelar');
-        if(modalBtnAceitar && modalBtnCancelar) {
-            modalBtnAceitar.style.display = detalhes.status === 'pendente' ? 'inline-block' : 'none';
-            modalBtnCancelar.style.display = ['pendente', 'preparando'].includes(detalhes.status) ? 'inline-block' : 'none';
-        }
 
-    } catch (error) {
-        console.error("Erro ao carregar detalhes do pedido:", error);
-        modalBody.innerHTML = `<p style="color: red;">Não foi possível carregar os detalhes: ${error.message}</p>`;
+    const modalBtnAceitar = document.getElementById("modalBtnAceitar");
+    const modalBtnCancelar = document.getElementById("modalBtnCancelar");
+    if (modalBtnAceitar && modalBtnCancelar) {
+      modalBtnAceitar.style.display =
+        detalhes.status === "pendente" ? "inline-block" : "none";
+      modalBtnCancelar.style.display = ["pendente", "preparando", "em_entrega"].includes(
+        detalhes.status
+      )
+        ? "inline-block"
+        : "none";
     }
+  } catch (error) {
+    console.error("Erro ao carregar detalhes do pedido:", error);
+    modalBody.innerHTML = `<p style="color: red;">Não foi possível carregar os detalhes: ${error.message}</p>`;
+  }
 }
 
 function fecharModalDetalhes() {
-    const modal = document.getElementById('modalDetalhesPedido');
-    if (modal) modal.classList.remove('ativo');
-    pedidoIdAtualModal = null; 
+  const modal = document.getElementById("modalDetalhesPedido");
+  if (modal) modal.classList.remove("ativo");
+  pedidoIdAtualModal = null;
 }
 
 // FUNÇÃO ATUALIZADA E INTELIGENTE
-async function atualizarStatusPedido(idPedido, novoStatus, fecharModal = false) {
-    // SE a ação for cancelar, nós chamamos o script especialista
-    if (novoStatus === 'cancelado') {
-        // Mostra uma confirmação extra, pois esta ação é importante
-        showCustomConfirm(`Tem certeza que deseja CANCELAR o pedido #${idPedido}? O estoque dos itens será devolvido.`, 'Confirmar Cancelamento', async () => {
-            try {
-                // Chama a API de cancelamento correta, que devolve o estoque e envia o bot
-                const response = await fetch(`/pdv/admin/pedidos/cancelar_pedido.php?id=${idPedido}`); 
-                
-                // O script de cancelamento lida com o redirecionamento e a mensagem de sessão,
-                // mas podemos recarregar os pedidos aqui para atualizar o Kanban na hora.
-                showCustomAlert("Pedido cancelado. O Kanban será atualizado.", "Sucesso", "success");
-                carregarPedidos();
-                if (fecharModal) fecharModalDetalhes();
-
-            } catch (error) {
-                showCustomAlert('Erro de comunicação ao tentar cancelar o pedido.', "Erro", "error");
-            }
-        }, 'error'); // Usar o tipo 'error' para o popup de confirmação de cancelamento
-
-    } 
-    // SENÃO, para qualquer outra mudança de status, usamos a API genérica de sempre
-    else {
+async function atualizarStatusPedido(
+  idPedido,
+  novoStatus,
+  fecharModal = false
+) {
+  // SE a ação for cancelar, nós chamamos o script especialista
+  if (novoStatus === "cancelado") {
+    // Mostra uma confirmação extra, pois esta ação é importante
+    showCustomConfirm(
+      `Tem certeza que deseja CANCELAR o pedido #${idPedido}? O estoque dos itens será devolvido.`,
+      "Confirmar Cancelamento",
+      async () => {
         try {
-            const response = await fetch('/pdv/public/api/atualizar_status_pedido.php', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id_pedido: idPedido, novo_status: novoStatus })
-            });
-            const resultado = await response.json();
-            if (resultado.sucesso) {
-                if (resultado.mensagem.includes("Nenhuma alteração")) {
-                    showCustomAlert(resultado.mensagem, "Informação", "info");
-                }
-                carregarPedidos(); // Atualiza o Kanban
-                if (fecharModal) fecharModalDetalhes();
-            } else {
-                showCustomAlert('Falha ao atualizar status: ' + resultado.mensagem, "Erro", "error");
-            }
+          // Chama a API de cancelamento correta, que devolve o estoque e envia o bot
+          const response = await fetch(
+            `/pdv/admin/pedidos/cancelar_pedido.php?id=${idPedido}`
+          );
+
+          // O script de cancelamento lida com o redirecionamento e a mensagem de sessão,
+          // mas podemos recarregar os pedidos aqui para atualizar o Kanban na hora.
+          showCustomAlert(
+            "Pedido cancelado. O Kanban será atualizado.",
+            "Sucesso",
+            "success"
+          );
+          carregarPedidos();
+          if (fecharModal) fecharModalDetalhes();
         } catch (error) {
-            showCustomAlert('Erro de comunicação ao atualizar o status.', "Erro", "error");
+          showCustomAlert(
+            "Erro de comunicação ao tentar cancelar o pedido.",
+            "Erro",
+            "error"
+          );
         }
+      },
+      "error"
+    ); // Usar o tipo 'error' para o popup de confirmação de cancelamento
+  }
+  // SENÃO, para qualquer outra mudança de status, usamos a API genérica de sempre
+  else {
+    try {
+      const response = await fetch(
+        "/pdv/public/api/atualizar_status_pedido.php",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_pedido: idPedido,
+            novo_status: novoStatus,
+          }),
+        }
+      );
+      const resultado = await response.json();
+      if (resultado.sucesso) {
+        if (resultado.mensagem.includes("Nenhuma alteração")) {
+          showCustomAlert(resultado.mensagem, "Informação", "info");
+        }
+        carregarPedidos(); // Atualiza o Kanban
+        if (fecharModal) fecharModalDetalhes();
+      } else {
+        showCustomAlert(
+          "Falha ao atualizar status: " + resultado.mensagem,
+          "Erro",
+          "error"
+        );
+      }
+    } catch (error) {
+      showCustomAlert(
+        "Erro de comunicação ao atualizar o status.",
+        "Erro",
+        "error"
+      );
     }
+  }
 }
 
 function escapeHTML(str) {
-    if (!str) return '';
-    return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  if (!str) return "";
+  return str
+    .toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }

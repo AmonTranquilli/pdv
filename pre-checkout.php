@@ -39,12 +39,14 @@ $popup_telefone = '';
 $popup_nome_cliente = '';
 
 // Função para formatar o número de telefone para o padrão de busca/salvamento no DB (APENAS DÍGITOS)
-function formatPhoneNumberForDbSearch($rawPhone) {
+function formatPhoneNumberForDbSearch($rawPhone)
+{
     return preg_replace('/\D/', '', $rawPhone); // Remove tudo que não é dígito
 }
 
 // Função para formatar o número de telefone para exibição (com parênteses e hífen)
-function formatPhoneNumberForDisplay($rawPhone) {
+function formatPhoneNumberForDisplay($rawPhone)
+{
     $cleanPhone = preg_replace('/\D/', '', $rawPhone);
     $length = strlen($cleanPhone);
 
@@ -80,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 error_log("pre-checkout.php: Erro na preparação da consulta de cliente: " . $conn->error);
             } else {
                 $stmt_check_client->bind_param("s", $telefone_para_busca_ou_salvar);
-                
+
                 if ($stmt_check_client->execute()) {
                     $result_check_client = $stmt_check_client->get_result();
 
@@ -103,7 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             'ponto_referencia' => $cliente_data['ponto_referencia'] ?? '',
                             'nao_possui_numero_casa' => ($cliente_data['ncasa'] === NULL || $cliente_data['ncasa'] === 'S/N')
                         ];
-
                     } else {
                         $_SESSION['cliente_id'] = null;
                         $popup_nome_cliente = '';
@@ -143,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // após o PHP já ter preenchido $_SESSION['temp_client_data']
         if (isset($_SESSION['temp_client_data'])) {
             $client_data_from_session = $_SESSION['temp_client_data'];
-            
+
             $nome_cliente = htmlspecialchars($client_data_from_session['nome']);
             $telefone_cliente_initial = htmlspecialchars($client_data_from_session['telefone']);
             $endereco_entrega = htmlspecialchars($client_data_from_session['endereco']);
@@ -166,7 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $show_phone_input_step = true;
             error_log("pre-checkout.php: Erro: Dados do cliente não encontrados na sessão para 'confirm_phone_and_continue'.");
         }
-        
     } elseif ($action === 'confirm_address') {
         $nome_cliente = trim($_POST['nome_cliente']);
         $endereco_entrega = trim($_POST['endereco_entrega']);
@@ -203,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             if ($is_new_client) {
                 $stmt_insert_client = $conn->prepare("INSERT INTO clientes (nome, telefone, endereco, ncasa, bairro, cep, complemento, ponto_referencia, data_cadastro) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-                
+
                 if ($stmt_insert_client === false) {
                     $mensagem_erro = "Erro na preparação do INSERT de cliente: " . $conn->error;
                     error_log("pre-checkout.php: Erro na preparação do INSERT: " . $conn->error);
@@ -236,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 }
             } else { // Cliente existente
                 $stmt_update_client = $conn->prepare("UPDATE clientes SET nome = ?, endereco = ?, ncasa = ?, bairro = ?, cep = ?, complemento = ?, ponto_referencia = ? WHERE id = ?");
-                
+
                 if ($stmt_update_client === false) {
                     $mensagem_erro = "Erro na preparação do UPDATE de cliente: " . $conn->error;
                     error_log("pre-checkout.php: Erro na preparação do UPDATE: " . $conn->error);
@@ -306,10 +306,11 @@ if (empty($mensagem_erro) && empty($action) && !$show_confirmation_popup && !$sh
 }
 
 // FIM DO BUFFER DE SAÍDA - APENAS AQUI O CONTEÚDO HTML É ENVIADO
-ob_end_flush(); 
+ob_end_flush();
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -335,7 +336,8 @@ ob_end_flush();
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            flex-grow: 1; /* Permite que o container cresça e ocupe o espaço */
+            flex-grow: 1;
+            /* Permite que o container cresça e ocupe o espaço */
         }
 
         h1 {
@@ -365,7 +367,8 @@ ob_end_flush();
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 1em;
-            box-sizing: border-box; /* Garante que o padding não aumente a largura total */
+            box-sizing: border-box;
+            /* Garante que o padding não aumente a largura total */
             transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
@@ -396,7 +399,9 @@ ob_end_flush();
             cursor: pointer;
         }
 
-        .btn-primary, .btn-secondary, .btn-edit-phone {
+        .btn-primary,
+        .btn-secondary,
+        .btn-edit-phone {
             display: block;
             width: 100%;
             padding: 15px;
@@ -435,26 +440,36 @@ ob_end_flush();
 
         /* Ajustes para o novo botão de edição */
         .btn-edit-phone {
-            background-color: var(--primary-color); /* Usando a variável CSS para laranja */
+            background-color: var(--primary-color);
+            /* Usando a variável CSS para laranja */
             color: white;
-            padding: 10px 18px; /* Aumentado o padding para deixar maior */
-            font-size: 1em; /* Aumentado o tamanho da fonte */
-            width: auto; /* Ajusta a largura ao conteúdo */
-            display: inline-flex; /* Para alinhar o ícone e o texto */
+            padding: 10px 18px;
+            /* Aumentado o padding para deixar maior */
+            font-size: 1em;
+            /* Aumentado o tamanho da fonte */
+            width: auto;
+            /* Ajusta a largura ao conteúdo */
+            display: inline-flex;
+            /* Para alinhar o ícone e o texto */
             align-items: center;
             justify-content: center;
-            gap: 8px; /* Espaçamento entre ícone e texto */
-            margin-left: 10px; /* Espaçamento à esquerda */
-            vertical-align: middle; /* Alinha com o input */
+            gap: 8px;
+            /* Espaçamento entre ícone e texto */
+            margin-left: 10px;
+            /* Espaçamento à esquerda */
+            vertical-align: middle;
+            /* Alinha com o input */
         }
 
         .btn-edit-phone:hover {
-            background-color: #E64A19; /* Laranja mais escuro no hover */
+            background-color: #E64A19;
+            /* Laranja mais escuro no hover */
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .message-error, .message-success {
+        .message-error,
+        .message-success {
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -474,11 +489,14 @@ ob_end_flush();
             border: 1px solid #c3e6cb;
         }
 
-        .phone-input-step, .address-input-step {
-            display: none; /* Escondido por padrão, JS controla a visibilidade */
+        .phone-input-step,
+        .address-input-step {
+            display: none;
+            /* Escondido por padrão, JS controla a visibilidade */
         }
 
-        .phone-input-step.active, .address-input-step.active {
+        .phone-input-step.active,
+        .address-input-step.active {
             display: block;
         }
 
@@ -504,8 +522,10 @@ ob_end_flush();
             height: 100%;
             background-color: rgba(0, 0, 0, 0.6);
             display: flex;
-            justify-content: center; /* Centraliza horizontalmente */
-            align-items: center; /* Centraliza verticalmente */
+            justify-content: center;
+            /* Centraliza horizontalmente */
+            align-items: center;
+            /* Centraliza verticalmente */
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
@@ -523,14 +543,18 @@ ob_end_flush();
             border-radius: 12px;
             box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
             text-align: center;
-            max-width: 400px; /* Limita a largura máxima do modal */
-            width: 90%; /* Ocupa 90% da largura disponível, até o max-width */
-            transform: scale(0.9); /* Inicia menor para um efeito de zoom-in */
+            max-width: 400px;
+            /* Limita a largura máxima do modal */
+            width: 90%;
+            /* Ocupa 90% da largura disponível, até o max-width */
+            transform: scale(0.9);
+            /* Inicia menor para um efeito de zoom-in */
             transition: transform 0.3s ease;
         }
 
         .confirmation-modal-overlay.visible .confirmation-modal-content {
-            transform: scale(1); /* Volta ao tamanho normal */
+            transform: scale(1);
+            /* Volta ao tamanho normal */
         }
 
         .confirmation-modal-content h2 {
@@ -553,7 +577,8 @@ ob_end_flush();
             display: flex;
             gap: 15px;
             margin-top: 25px;
-            flex-direction: column; /* Empilha botões em telas menores */
+            flex-direction: column;
+            /* Empilha botões em telas menores */
         }
 
         .confirmation-modal-actions .btn-primary,
@@ -570,15 +595,18 @@ ob_end_flush();
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.8); /* Fundo branco semi-transparente */
+            background-color: rgba(255, 255, 255, 0.8);
+            /* Fundo branco semi-transparente */
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1001; /* Acima do modal de confirmação */
+            z-index: 1001;
+            /* Acima do modal de confirmação */
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
-            flex-direction: column; /* Para empilhar texto e spinner */
+            flex-direction: column;
+            /* Para empilhar texto e spinner */
         }
 
         .loading-overlay.visible {
@@ -587,8 +615,10 @@ ob_end_flush();
         }
 
         .loading-overlay .spinner {
-            border: 4px solid #f3f3f3; /* Light grey */
-            border-top: 4px solid #FF5722; /* Primary color */
+            border: 4px solid #f3f3f3;
+            /* Light grey */
+            border-top: 4px solid #FF5722;
+            /* Primary color */
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -603,8 +633,13 @@ ob_end_flush();
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Estilo para o grupo de input e botão de edição */
@@ -612,13 +647,17 @@ ob_end_flush();
             display: flex;
             align-items: center;
             margin-bottom: 20px;
-            gap: 10px; /* Espaçamento entre o input e o botão */
+            gap: 10px;
+            /* Espaçamento entre o input e o botão */
         }
 
         .phone-display-group input#telefone_cliente_display {
-            flex-grow: 0; /* Impede que o input ocupe todo o espaço */
-            width: auto; /* Permite que a largura seja definida pelo conteúdo ou max-width */
-            max-width: 180px; /* Largura máxima para o campo de telefone */
+            flex-grow: 0;
+            /* Impede que o input ocupe todo o espaço */
+            width: auto;
+            /* Permite que a largura seja definida pelo conteúdo ou max-width */
+            max-width: 180px;
+            /* Largura máxima para o campo de telefone */
         }
 
         /* Novo estilo para o Modal de Erro */
@@ -632,7 +671,8 @@ ob_end_flush();
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1002; /* Acima de outros modais */
+            z-index: 1002;
+            /* Acima de outros modais */
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -660,7 +700,8 @@ ob_end_flush();
         }
 
         .error-modal-content h2 {
-            color: #dc3545; /* Vermelho para erro */
+            color: #dc3545;
+            /* Vermelho para erro */
             margin-bottom: 20px;
             font-size: 1.8em;
         }
@@ -672,7 +713,8 @@ ob_end_flush();
         }
 
         .error-modal-content .btn-ok {
-            background-color: #dc3545; /* Vermelho para o botão OK */
+            background-color: #dc3545;
+            /* Vermelho para o botão OK */
             color: white;
             padding: 12px 25px;
             border: none;
@@ -700,33 +742,49 @@ ob_end_flush();
                 margin-bottom: 20px;
             }
 
-            .btn-primary, .btn-secondary {
+            .btn-primary,
+            .btn-secondary {
                 padding: 12px;
                 font-size: 1em;
             }
-            .confirmation-modal-content, .error-modal-content {
+
+            .confirmation-modal-content,
+            .error-modal-content {
                 padding: 20px;
             }
-            .confirmation-modal-content h2, .error-modal-content h2 {
+
+            .confirmation-modal-content h2,
+            .error-modal-content h2 {
                 font-size: 1.5em;
             }
-            .confirmation-modal-content p, .error-modal-content p {
+
+            .confirmation-modal-content p,
+            .error-modal-content p {
                 font-size: 1em;
             }
+
             .phone-display-group {
-                flex-direction: column; /* Empilha em telas pequenas */
-                align-items: stretch; /* Estica os itens */
+                flex-direction: column;
+                /* Empilha em telas pequenas */
+                align-items: stretch;
+                /* Estica os itens */
             }
+
             .phone-display-group .btn-edit-phone {
-                width: 100%; /* Botão ocupa a largura total */
-                margin-left: 0; /* Remove margem lateral */
+                width: 100%;
+                /* Botão ocupa a largura total */
+                margin-left: 0;
+                /* Remove margem lateral */
             }
+
             .phone-display-group input#telefone_cliente_display {
-                max-width: 100%; /* Em mobile, ocupa a largura total disponível */
+                max-width: 100%;
+                /* Em mobile, ocupa a largura total disponível */
             }
         }
     </style>
 </head>
+
 <body>
 
     <div class="checkout-container">
@@ -758,8 +816,8 @@ ob_end_flush();
                 <div class="form-group">
                     <label for="telefone_cliente_initial_input">Seu Telefone:</label>
                     <input type="tel" id="telefone_cliente_initial_input" name="telefone_cliente_initial_input"
-                           placeholder="(XX) XXXXX-XXXX" maxlength="15" inputmode="numeric" required
-                           value="<?= htmlspecialchars($telefone_cliente_initial) ?>">
+                        placeholder="(XX) XXXXX-XXXX" maxlength="15" inputmode="numeric" required
+                        value="<?= htmlspecialchars($telefone_cliente_initial) ?>">
                     <small>Digite seu telefone com DDD (mínimo 10 dígitos) para buscar seu cadastro ou iniciar um novo cadastro.</small>
                 </div>
                 <button type="button" id="btnCheckPhone" class="btn-primary">Continuar</button>
@@ -770,13 +828,13 @@ ob_end_flush();
             <!-- Etapa 2: Endereço -->
             <div id="addressInputStep" class="address-input-step">
                 <p>Confirme ou preencha seus dados de entrega:</p>
-                
+
                 <!-- Telefone exibido com botão de edição -->
                 <div class="form-group">
                     <label for="telefone_cliente_display">Telefone:</label>
                     <div class="phone-display-group">
                         <input type="tel" id="telefone_cliente_display"
-                               value="<?= htmlspecialchars($telefone_cliente_initial) ?>" readonly>
+                            value="<?= htmlspecialchars($telefone_cliente_initial) ?>" readonly>
                         <button type="button" id="btnEditPhoneFromAddress" class="btn-edit-phone">
                             <i class="fas fa-edit"></i> Editar
                         </button>
@@ -786,50 +844,50 @@ ob_end_flush();
                 <div class="form-group">
                     <label for="nome_cliente">Nome Completo:</label>
                     <input type="text" id="nome_cliente" name="nome_cliente" required
-                           value="<?= htmlspecialchars($nome_cliente) ?>">
+                        value="<?= htmlspecialchars($nome_cliente) ?>">
                 </div>
 
                 <div class="form-group">
                     <label for="endereco_entrega">Endereço (Rua, Av.):</label>
                     <input type="text" id="endereco_entrega" name="endereco_entrega" required
-                           value="<?= htmlspecialchars($endereco_entrega) ?>">
+                        value="<?= htmlspecialchars($endereco_entrega) ?>">
                 </div>
 
                 <div class="form-group">
                     <div class="form-check">
                         <input type="checkbox" id="nao_possui_numero_casa_confirm" name="nao_possui_numero_casa_confirm" value="1"
-                               <?= $nao_possui_numero_casa ? 'checked' : '' ?>>
+                            <?= $nao_possui_numero_casa ? 'checked' : '' ?>>
                         <label class="form-check-label" for="nao_possui_numero_casa_confirm">Cliente não possui número da casa</label>
                     </div>
                     <label for="numero_entrega">Número da Casa:</label>
                     <input type="text" id="numero_entrega" name="numero_entrega"
-                           value="<?= htmlspecialchars($numero_entrega) ?>"
-                           <?= $nao_possui_numero_casa ? 'disabled' : '' ?>>
+                        value="<?= htmlspecialchars($numero_entrega) ?>"
+                        <?= $nao_possui_numero_casa ? 'disabled' : '' ?>>
                 </div>
 
                 <div class="form-group">
                     <label for="bairro_entrega">Bairro:</label>
                     <input type="text" id="bairro_entrega" name="bairro_entrega" required
-                           value="<?= htmlspecialchars($bairro_entrega) ?>">
+                        value="<?= htmlspecialchars($bairro_entrega) ?>">
                 </div>
 
                 <div class="form-group">
                     <label for="cep_entrega">CEP (Opcional):</label>
                     <input type="text" id="cep_entrega" name="cep_entrega"
-                           value="<?= htmlspecialchars($cep_entrega) ?>">
+                        value="<?= htmlspecialchars($cep_entrega) ?>">
                 </div>
 
                 <div class="form-group">
                     <label for="complemento_entrega">Complemento:</label>
                     <input type="text" id="complemento_entrega" name="complemento_entrega"
-                           value="<?= htmlspecialchars($complemento_entrega) ?>">
+                        value="<?= htmlspecialchars($complemento_entrega) ?>">
                     <small>Ex: Apartamento 101, Bloco B (Obrigatório se não tiver número da casa)</small>
                 </div>
 
                 <div class="form-group">
                     <label for="ponto_referencia_entrega">Ponto de Referência (Opcional):</label>
                     <input type="text" id="ponto_referencia_entrega" name="ponto_referencia_entrega"
-                           value="<?= htmlspecialchars($ponto_referencia_entrega) ?>">
+                        value="<?= htmlspecialchars($ponto_referencia_entrega) ?>">
                     <small>Ex: Próximo à padaria, em frente ao colégio.</small>
                 </div>
 
@@ -987,7 +1045,7 @@ ob_end_flush();
             }
 
             // Aplica a máscara de telefone
-            telefoneClienteInitialInput.addEventListener('input', function (e) {
+            telefoneClienteInitialInput.addEventListener('input', function(e) {
                 let value = e.target.value.replace(/\D/g, '');
                 if (value.length > 11) value = value.slice(0, 11);
                 if (value.length >= 2 && value.length <= 6) {
@@ -1120,10 +1178,11 @@ ob_end_flush();
                 if (savedClientPhone) {
                     telefoneClienteInitialInput.value = formatPhoneNumberForDisplay(savedClientPhone);
                     // O campo hidden também precisa do valor formatado para o PHP processar
-                    telefoneClienteInitialHidden.value = formatPhoneNumberForDisplay(savedClientPhone); 
+                    telefoneClienteInitialHidden.value = formatPhoneNumberForDisplay(savedClientPhone);
                 }
             }
         });
     </script>
 </body>
+
 </html>
