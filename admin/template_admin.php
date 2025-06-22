@@ -165,16 +165,38 @@ $nivel_acesso = $_SESSION['nivel_acesso'] ?? 'N/A';
                 const data = await response.json();
 
                 if (data.sucesso) {
-                    // Atualiza a bolha vermelha (badge)
+                    // --- LÓGICA DE SOM SELETIVO ---
+                    // 1. Define quais tipos de notificação devem tocar som
+                    const tiposComSom = ['estoque_baixo']; // Adicione outros tipos aqui se quiser, ex: ['estoque_baixo', 'pedido_cancelado_cliente']
+
+                    // 2. Verifica se alguma das notificações *novas* é de um tipo que deve tocar som
+                    if (!isPrimeiraCarga && data.nao_lidas > unreadCount) {
+                        let deveTocarSom = false;
+                        const novasNotificacoes = data.notificacoes.slice(0, data.nao_lidas - unreadCount);
+
+                        novasNotificacoes.forEach(n => {
+                            if (tiposComSom.includes(n.tipo)) {
+                                deveTocarSom = true;
+                            }
+                        });
+
+                        if (deveTocarSom) {
+                            const som = document.getElementById('somNotificacao');
+                            if (som) som.play().catch(e => console.error("Erro ao tocar som:", e));
+                        }
+                    }
+                    // --- FIM DA LÓGICA DE SOM ---
+
+
+                    // O resto da função continua igual, apenas atualizando a interface visual
                     if (data.nao_lidas > 0) {
                         notificationCount.textContent = data.nao_lidas > 9 ? '9+' : data.nao_lidas;
                         notificationCount.style.display = 'flex';
                     } else {
                         notificationCount.style.display = 'none';
                     }
-                    unreadCount = data.nao_lidas; // Armazena a contagem para uso posterior
+                    unreadCount = data.nao_lidas;
 
-                    // Preenche o painel de notificações
                     if (data.notificacoes.length > 0) {
                         notificationsPanel.innerHTML = data.notificacoes.map(n => {
                             const link = n.link ? `href="${n.link}"` : 'href="#" style="cursor:default;"';

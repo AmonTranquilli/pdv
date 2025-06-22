@@ -4,7 +4,8 @@ header('Content-Type: application/json');
 
 require_once '../../includes/conexao.php';
 
-function enviarNotificacaoWhatsApp($telefone_destino, $dados_para_template) {
+function enviarNotificacaoWhatsApp($telefone_destino, $dados_para_template)
+{
     $url = 'http://localhost:3000/enviar-notificacao';
     $dados_post = [
         'telefone_destino' => $telefone_destino,
@@ -54,7 +55,9 @@ try {
     $stmt_pedido = $conn->prepare("INSERT INTO pedidos (id_cliente, nome_cliente, telefone_cliente, endereco_entrega, numero_entrega, bairro_entrega, complemento_entrega, referencia_entrega, data_pedido, total_pedido, forma_pagamento, troco_para, troco, observacoes_pedido, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, 'pendente')");
     $id_cliente = $cliente_data['id'] ?? null;
     $stmt_pedido->bind_param("isssssssdssss", $id_cliente, $cliente_data['nome'], $cliente_data['telefone'], $cliente_data['endereco'], $cliente_data['numero'], $cliente_data['bairro'], $cliente_data['complemento'], $cliente_data['ponto_referencia'], $total_pedido, $forma_pagamento, $troco_para, $troco, $observacoes_pedido);
-    if (!$stmt_pedido->execute()) { throw new Exception("Erro ao inserir pedido principal: " . $stmt_pedido->error); }
+    if (!$stmt_pedido->execute()) {
+        throw new Exception("Erro ao inserir pedido principal: " . $stmt_pedido->error);
+    }
     $pedido_id = $conn->insert_id;
     $stmt_pedido->close();
 
@@ -79,7 +82,7 @@ try {
         if (!$stmt_item->execute()) {
             throw new Exception("Erro ao inserir item do pedido: " . $stmt_item->error);
         }
-        
+
         // 3. Atualiza o estoque do produto principal (lógica mantida)
         $stmt_check_estoque = $conn->prepare("SELECT estoque, controla_estoque FROM produtos WHERE id = ?");
         $stmt_check_estoque->bind_param("i", $item['id']);
@@ -96,6 +99,25 @@ try {
                 throw new Exception("Erro ao atualizar estoque para: " . $item['nome']);
             }
         }
+        // --- VERIFICAÇÃO DE ESTOQUE BAIXO ---
+        // Pega o novo valor do estoque após a baixa para decidir se notifica
+        $novo_estoque = $produto_info['estoque'] - $item['quantidade'];
+        $limite_estoque_baixo = 5; // Defina aqui o seu limite para alerta (ex: 5 unidades)
+
+        if ($produto_info['controla_estoque'] == 1 && $novo_estoque <= $limite_estoque_baixo) {
+            // Se o estoque está baixo, cria uma notificação
+            $mensagem_notificacao = "Estoque de '" . $item['nome'] . "' está baixo! Restam apenas " . $novo_estoque . " unidades.";
+            $link_notificacao = "/pdv/admin/produtos/editar_produto.php?id=" . $item['id']; // Link para a edição do produto
+
+            $stmt_notificacao = $conn->prepare(
+                "INSERT INTO notificacoes (tipo, mensagem, link) VALUES ('estoque_baixo', ?, ?)"
+            );
+            // Nota: tipo 'estoque_baixo' foi definido diretamente na query
+            $stmt_notificacao->bind_param("ss", $mensagem_notificacao, $link_notificacao);
+            $stmt_notificacao->execute();
+            $stmt_notificacao->close();
+        }
+        // --- FIM DA VERIFICAÇÃO ---
     }
     $stmt_item->close();
     $stmt_update_estoque->close();
@@ -124,40 +146,44 @@ try {
     if ($sqlConfig) {
         $sqlConfig->execute();
         $resultConfig = $sqlConfig->get_result();
-        if ($config = $resultConfig->fetch_assoc()) { $taxa_entrega_valor = (float)$config['taxa_entrega']; }
+        if ($config = $resultConfig->fetch_assoc()) {
+            $taxa_entrega_valor = (float)$config['taxa_entrega'];
+        }
         $sqlConfig->close();
     }
-    
+
     $endereco_completo = htmlspecialchars($cliente_data['endereco']) . ", " . htmlspecialchars($cliente_data['numero'] ?? 'S/N') . ", " . htmlspecialchars($cliente_data['bairro']);
-    if (!empty($cliente_data['complemento'])) { $endereco_completo .= " (" . htmlspecialchars($cliente_data['complemento']) . ")"; }
-    
-    $dados_para_bot = [ /* O array com os 6 ou 10 parâmetros, dependendo do seu template atual */ ]; // PREENCHA ESTE ARRAY CONFORME O TEMPLATE ESCOLHIDO
+    if (!empty($cliente_data['complemento'])) {
+        $endereco_completo .= " (" . htmlspecialchars($cliente_data['complemento']) . ")";
+    }
+
+    $dados_para_bot = [ /* O array com os 6 ou 10 parâmetros, dependendo do seu template atual */]; // PREENCHA ESTE ARRAY CONFORME O TEMPLATE ESCOLHIDO
     // Exemplo para o template simplificado de 6 variáveis:
-     // CÓDIGO CORRIGIDO
+    // CÓDIGO CORRIGIDO
     $dados_para_bot = [
-    "template_name"     => "confirmacao_com_botao", // <-- ADICIONE ESTA LINHA (use o nome exato do seu template)
-    "nome_cliente"      => explode(' ', $cliente_data['nome'])[0],
-    "id_pedido"         => strval($pedido_id),
-    "forma_pagamento"   => ucfirst($forma_pagamento),
-    "taxa_entrega"      => number_format($taxa_entrega_valor, 2, ',', '.'),
-    "endereco_completo" => $endereco_completo,
-    "total_pedido"      => number_format($total_pedido, 2, ',', '.')
-];
+        "template_name"     => "confirmacao_com_botao", // <-- ADICIONE ESTA LINHA (use o nome exato do seu template)
+        "nome_cliente"      => explode(' ', $cliente_data['nome'])[0],
+        "id_pedido"         => strval($pedido_id),
+        "forma_pagamento"   => ucfirst($forma_pagamento),
+        "taxa_entrega"      => number_format($taxa_entrega_valor, 2, ',', '.'),
+        "endereco_completo" => $endereco_completo,
+        "total_pedido"      => number_format($total_pedido, 2, ',', '.')
+    ];
 
     $telefone_cliente_formatado = "55" . preg_replace('/\D/', '', $cliente_data['telefone']);
     enviarNotificacaoWhatsApp($telefone_cliente_formatado, $dados_para_bot);
-    
+
     unset($_SESSION['carrinho'], $_SESSION['checkout_cliente_data']);
     $response['success'] = true;
     $response['message'] = 'Pedido finalizado com sucesso!';
     $response['pedido_id'] = $pedido_id;
-
 } catch (Exception $e) {
     $conn->rollback();
     $response['message'] = 'Erro ao finalizar pedido: ' . $e->getMessage();
     error_log("Erro no processamento do pedido: " . $e->getMessage());
 } finally {
-    if (isset($conn) && $conn->ping()) { $conn->close(); }
+    if (isset($conn) && $conn->ping()) {
+        $conn->close();
+    }
     echo json_encode($response);
 }
-?>
