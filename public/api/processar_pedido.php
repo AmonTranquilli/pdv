@@ -99,25 +99,46 @@ try {
                 throw new Exception("Erro ao atualizar estoque para: " . $item['nome']);
             }
         }
-        // --- VERIFICAÇÃO DE ESTOQUE BAIXO ---
-        // Pega o novo valor do estoque após a baixa para decidir se notifica
-        $novo_estoque = $produto_info['estoque'] - $item['quantidade'];
-        $limite_estoque_baixo = 5; // Defina aqui o seu limite para alerta (ex: 5 unidades)
+        // >>> SUBSTITUA PELO CÓDIGO ABAIXO <<<
 
-        if ($produto_info['controla_estoque'] == 1 && $novo_estoque <= $limite_estoque_baixo) {
-            // Se o estoque está baixo, cria uma notificação
-            $mensagem_notificacao = "Estoque de '" . $item['nome'] . "' está baixo! Restam apenas " . $novo_estoque . " unidades.";
-            $link_notificacao = "/pdv/admin/produtos/editar_produto.php?id=" . $item['id']; // Link para a edição do produto
+        // --- NOVA VERIFICAÇÃO DE ESTOQUE INTELIGENTE ---
+        if ($produto_info && $produto_info['controla_estoque'] == 1) {
+            $estoque_anterior = (int)$produto_info['estoque'];
+            $estoque_novo = $estoque_anterior - $item['quantidade'];
 
-            $stmt_notificacao = $conn->prepare(
-                "INSERT INTO notificacoes (tipo, mensagem, link) VALUES ('estoque_baixo', ?, ?)"
-            );
-            // Nota: tipo 'estoque_baixo' foi definido diretamente na query
-            $stmt_notificacao->bind_param("ss", $mensagem_notificacao, $link_notificacao);
-            $stmt_notificacao->execute();
-            $stmt_notificacao->close();
+            $mensagem_notificacao = ''; // Inicia a mensagem como vazia
+
+            // Defina aqui seus níveis de alerta. Pode adicionar mais se quiser.
+            $nivel_alerta_critico = 5;
+            $nivel_alerta_zerado = 0;
+
+            // 1. Alerta quando o estoque ACABA
+            if ($estoque_novo <= $nivel_alerta_zerado && $estoque_anterior > $nivel_alerta_zerado) {
+                $mensagem_notificacao = "O estoque de '" . $item['nome'] . "' acabou e o produto foi desativado!";
+
+                // Opcional, mas recomendado: desativa o produto automaticamente
+                $stmt_desativar = $conn->prepare("UPDATE produtos SET ativo = 0 WHERE id = ?");
+                $stmt_desativar->bind_param("i", $item['id']);
+                $stmt_desativar->execute();
+                $stmt_desativar->close();
+            }
+            // 2. Alerta quando entra no nível CRÍTICO (ex: cruza a barreira de 5 unidades)
+            elseif ($estoque_novo <= $nivel_alerta_critico && $estoque_anterior > $nivel_alerta_critico) {
+                $mensagem_notificacao = "Atenção: Estoque de '" . $item['nome'] . "' está crítico! Restam apenas " . $estoque_novo . " unidades.";
+            }
+
+            // 3. Se uma mensagem de notificação foi definida, insere ela no banco de dados
+            if (!empty($mensagem_notificacao)) {
+                $link_notificacao = "/pdv/admin/produtos/produtos.php"; // Link para a listagem de produtos
+                $stmt_notificacao = $conn->prepare(
+                    "INSERT INTO notificacoes (tipo, mensagem, link) VALUES ('estoque_baixo', ?, ?)"
+                );
+                $stmt_notificacao->bind_param("ss", $mensagem_notificacao, $link_notificacao);
+                $stmt_notificacao->execute();
+                $stmt_notificacao->close();
+            }
         }
-        // --- FIM DA VERIFICAÇÃO ---
+        // --- FIM DA NOVA VERIFICAÇÃO ---
     }
     $stmt_item->close();
     $stmt_update_estoque->close();

@@ -98,11 +98,6 @@ ob_start();
 </div>
 
 <script src="<?php echo htmlspecialchars($baseUrl); ?>/js/kanban_script.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.body.classList.add('kanban-page-active');
-    });
-</script>
 
 <?php
 $page_content = ob_get_clean();

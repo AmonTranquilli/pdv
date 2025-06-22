@@ -77,181 +77,187 @@ $nivel_acesso = $_SESSION['nivel_acesso'] ?? 'N/A';
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('main-content');
-            const toggleButton = document.getElementById('toggle-sidebar');
+    // =============================================================
+    // === SCRIPT FINAL E CORRIGIDO PARA TEMPLATE_ADMIN.PHP ===
+    // =============================================================
 
-            // Lógica do botão de recolher/expandir
-            if (toggleButton) {
-                toggleButton.addEventListener('click', () => {
-                    sidebar.classList.toggle('collapsed');
-                    mainContent.classList.toggle('expanded');
-                });
-            }
+    // --- Variáveis de controle para as Notificações (Escopo Global) ---
+    // Colocamos aqui para que as funções abaixo possam acessá-las
+    let unreadCount = 0;
+    let isPrimeiraCarga = true;
+    let idsNotificacoesAnteriores = new Set();
 
-            // --- JAVASCRIPT CORRIGIDO E FINAL PARA O MENU ---
-
-            // Lógica para abrir/fechar os submenus
-            sidebar.querySelectorAll('.has-submenu > a').forEach(function(menuLink) {
-                menuLink.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    // Fecha outros submenus abertos para ter um efeito "sanfona"
-                    sidebar.querySelectorAll('.has-submenu.open').forEach(function(openSubmenu) {
-                        if (openSubmenu !== menuLink.parentElement) {
-                            openSubmenu.classList.remove('open');
-                        }
-                    });
-                    // Abre ou fecha o submenu atual
-                    this.parentElement.classList.toggle('open');
-                });
-            });
-
-            // Lógica para manter o menu da página atual aberto e ativo
-            const currentPage = window.location.pathname;
-            sidebar.querySelectorAll('.submenu a').forEach(function(itemLink) {
-                if (itemLink.getAttribute('href') === currentPage) {
-                    itemLink.classList.add('active'); // Destaca o item atual
-                    let parentSubmenu = itemLink.closest('.has-submenu');
-                    if (parentSubmenu) {
-                        parentSubmenu.classList.add('open'); // Abre o submenu pai
-                        // Opcional: Adiciona 'active' ao link principal também
-                        parentSubmenu.querySelector('a').classList.add('active');
-                    }
-                }
-            });
-
-            // --- LÓGICA ANTIGA DO ESTOQUE (MANTIDA) ---
-            const controlaEstoqueCheckbox = document.getElementById('controla_estoque');
-            const estoqueGroup = document.getElementById('estoque_group');
-            const estoqueInput = document.getElementById('estoque');
-            const ativoCheckbox = document.getElementById('ativo');
-
-            function toggleEstoqueField() {
-                if (controlaEstoqueCheckbox && estoqueGroup && estoqueInput && ativoCheckbox) {
-                    if (controlaEstoqueCheckbox.checked) {
-                        estoqueGroup.style.display = 'block';
-                        estoqueInput.setAttribute('required', 'required');
-                        if (parseInt(estoqueInput.value) <= 0) {
-                            ativoCheckbox.checked = false;
-                            ativoCheckbox.disabled = true;
-                        } else {
-                            ativoCheckbox.disabled = false;
-                        }
-                    } else {
-                        estoqueGroup.style.display = 'none';
-                        estoqueInput.removeAttribute('required');
-                        estoqueInput.value = '0';
-                        ativoCheckbox.disabled = false;
-                    }
-                }
-            }
-            if (controlaEstoqueCheckbox) {
-                toggleEstoqueField();
-                controlaEstoqueCheckbox.addEventListener('change', toggleEstoqueField);
-                estoqueInput.addEventListener('input', toggleEstoqueField);
-            }
-
-        });
-        const notificationBell = document.getElementById('notificationBell');
+    // --- Funções de Notificação (Escopo Global) ---
+    async function fetchNotifications() {
         const notificationCount = document.getElementById('notificationCount');
         const notificationsPanel = document.getElementById('notificationsPanel');
-        let unreadCount = 0; // Variável para guardar a contagem de não lidas
+        if (!notificationCount || !notificationsPanel) return;
 
-        // Função para buscar e atualizar as notificações
-        async function fetchNotifications() {
-            try {
-                const response = await fetch('/pdv/public/api/get_notificacoes.php');
-                const data = await response.json();
+        try {
+            const response = await fetch('/pdv/public/api/get_notificacoes.php');
+            const data = await response.json();
 
-                if (data.sucesso) {
-                    // --- LÓGICA DE SOM SELETIVO ---
-                    // 1. Define quais tipos de notificação devem tocar som
-                    const tiposComSom = ['estoque_baixo']; // Adicione outros tipos aqui se quiser, ex: ['estoque_baixo', 'pedido_cancelado_cliente']
-
-                    // 2. Verifica se alguma das notificações *novas* é de um tipo que deve tocar som
-                    if (!isPrimeiraCarga && data.nao_lidas > unreadCount) {
-                        let deveTocarSom = false;
-                        const novasNotificacoes = data.notificacoes.slice(0, data.nao_lidas - unreadCount);
-
-                        novasNotificacoes.forEach(n => {
-                            if (tiposComSom.includes(n.tipo)) {
-                                deveTocarSom = true;
+            if (data.sucesso) {
+                // --- Lógica de Som (agora simplificada e correta) ---
+                let tocarSomDePedido = false;
+                if (!isPrimeiraCarga) {
+                    const idsAtuais = new Set(data.notificacoes.map(n => n.id));
+                    // Itera sobre os IDs atuais para ver se algum é novo
+                    idsAtuais.forEach(id => {
+                        if (!idsNotificacoesAnteriores.has(id)) {
+                            // Encontra a notificação completa para checar o tipo
+                            const novaNotificacao = data.notificacoes.find(n => n.id === id);
+                            // Toca o som apenas se a nova notificação for do tipo 'novo_pedido'
+                            if (novaNotificacao && novaNotificacao.tipo === 'novo_pedido') {
+                                tocarSomDePedido = true;
                             }
-                        });
-
-                        if (deveTocarSom) {
-                            const som = document.getElementById('somNotificacao');
-                            if (som) som.play().catch(e => console.error("Erro ao tocar som:", e));
                         }
-                    }
-                    // --- FIM DA LÓGICA DE SOM ---
+                    });
+                }
 
-
-                    // O resto da função continua igual, apenas atualizando a interface visual
-                    if (data.nao_lidas > 0) {
-                        notificationCount.textContent = data.nao_lidas > 9 ? '9+' : data.nao_lidas;
-                        notificationCount.style.display = 'flex';
-                    } else {
-                        notificationCount.style.display = 'none';
-                    }
-                    unreadCount = data.nao_lidas;
-
-                    if (data.notificacoes.length > 0) {
-                        notificationsPanel.innerHTML = data.notificacoes.map(n => {
-                            const link = n.link ? `href="${n.link}"` : 'href="#" style="cursor:default;"';
-                            return `<a ${link} class="notification-item">
-                                <p class="notification-message">${n.mensagem}</p>
-                                <small class="notification-date">${new Date(n.data_criacao).toLocaleString('pt-BR')}</small>
-                            </a>`;
-                        }).join('');
-                    } else {
-                        notificationsPanel.innerHTML = '<div class="notification-item"><p>Nenhuma notificação.</p></div>';
+                if (tocarSomDePedido) {
+                    const som = document.getElementById('somNovoPedido'); // ID correto do áudio
+                    if (som) {
+                        som.play().catch(e => console.error("Erro ao tocar som de novo pedido:", e));
                     }
                 }
-            } catch (error) {
-                console.error('Erro ao buscar notificações:', error);
-            }
-        }
+                
+                // Atualiza a memória de notificações para a próxima verificação
+                idsNotificacoesAnteriores = new Set(data.notificacoes.map(n => n.id));
+                isPrimeiraCarga = false;
+                
+                // --- Lógica Visual ---
+                unreadCount = data.nao_lidas;
+                if (unreadCount > 0) {
+                    notificationCount.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    notificationCount.style.display = 'flex';
+                } else {
+                    notificationCount.style.display = 'none';
+                }
 
-        // Função para marcar notificações como lidas
-        async function markNotificationsAsRead() {
-            try {
-                await fetch('/pdv/public/api/marcar_como_lidas.php', {
-                    method: 'POST'
+                // Preenche o painel de notificações
+                if (data.notificacoes.length > 0) {
+                    notificationsPanel.innerHTML = data.notificacoes.map(n => {
+                        const link = n.link ? `href="${n.link}"` : 'href="#" style="cursor:default;"';
+                        return `<a ${link} class="notification-item">
+                                    <p class="notification-message">${n.mensagem}</p>
+                                    <small class="notification-date">${new Date(n.data_criacao).toLocaleString('pt-BR')}</small>
+                                </a>`;
+                    }).join('');
+                } else {
+                    notificationsPanel.innerHTML = '<div class="notification-item"><p>Nenhuma notificação.</p></div>';
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao buscar notificações:', error);
+        }
+    }
+
+    async function markNotificationsAsRead() {
+        try {
+            await fetch('/pdv/public/api/marcar_como_lidas.php', { method: 'POST' });
+            document.getElementById('notificationCount').style.display = 'none';
+            unreadCount = 0;
+        } catch (error) {
+            console.error('Erro ao marcar notificações como lidas:', error);
+        }
+    }
+
+
+    // --- LÓGICA QUE EXECUTA QUANDO A PÁGINA ESTÁ PRONTA ---
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- LÓGICA DO MENU LATERAL ---
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const toggleButton = document.getElementById('toggle-sidebar');
+        if (toggleButton) {
+            toggleButton.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            });
+        }
+        sidebar.querySelectorAll('.has-submenu > a').forEach(function(menuLink) {
+            menuLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                sidebar.querySelectorAll('.has-submenu.open').forEach(function(openSubmenu) {
+                    if (openSubmenu !== menuLink.parentElement) {
+                        openSubmenu.classList.remove('open');
+                    }
                 });
-                notificationCount.style.display = 'none'; // Esconde a bolha imediatamente
-                unreadCount = 0;
-            } catch (error) {
-                console.error('Erro ao marcar notificações como lidas:', error);
-            }
-        }
-
-        // Evento para mostrar/esconder o painel ao clicar no sino
-        notificationBell.addEventListener('click', (e) => {
-            e.stopPropagation(); // Impede que o clique se propague para o document
-            const isVisible = notificationsPanel.style.display === 'block';
-            notificationsPanel.style.display = isVisible ? 'none' : 'block';
-
-            // Se o painel está sendo aberto E existem notificações não lidas
-            if (!isVisible && unreadCount > 0) {
-                markNotificationsAsRead();
+                this.parentElement.classList.toggle('open');
+            });
+        });
+        const currentPage = window.location.pathname;
+        sidebar.querySelectorAll('.submenu a').forEach(function(itemLink) {
+            if (itemLink.getAttribute('href') === currentPage) {
+                itemLink.classList.add('active');
+                let parentSubmenu = itemLink.closest('.has-submenu');
+                if (parentSubmenu) {
+                    parentSubmenu.classList.add('open');
+                    parentSubmenu.querySelector('a').classList.add('active');
+                }
             }
         });
 
-        // Evento para fechar o painel se clicar em qualquer outro lugar da página
+        // --- LÓGICA DO FORMULÁRIO DE ESTOQUE ---
+        const controlaEstoqueCheckbox = document.getElementById('controla_estoque');
+        const estoqueGroup = document.getElementById('estoque_group');
+        const estoqueInput = document.getElementById('estoque');
+        const ativoCheckbox = document.getElementById('ativo');
+
+        function toggleEstoqueField() {
+            if (controlaEstoqueCheckbox && estoqueGroup && estoqueInput && ativoCheckbox) {
+                if (controlaEstoqueCheckbox.checked) {
+                    estoqueGroup.style.display = 'block';
+                    estoqueInput.setAttribute('required', 'required');
+                    if (parseInt(estoqueInput.value, 10) <= 0) {
+                        ativoCheckbox.checked = false;
+                        ativoCheckbox.disabled = true;
+                    } else {
+                        ativoCheckbox.disabled = false;
+                    }
+                } else {
+                    estoqueGroup.style.display = 'none';
+                    estoqueInput.removeAttribute('required');
+                    estoqueInput.value = '0';
+                    ativoCheckbox.disabled = false;
+                }
+            }
+        }
+        if (controlaEstoqueCheckbox) {
+            toggleEstoqueField();
+            controlaEstoqueCheckbox.addEventListener('change', toggleEstoqueField);
+            estoqueInput.addEventListener('input', toggleEstoqueField);
+        }
+
+        // --- LÓGICA DE CLIQUE PARA AS NOTIFICAÇÕES ---
+        const notificationBell = document.getElementById('notificationBell');
+        const notificationsPanel = document.getElementById('notificationsPanel');
+
+        if (notificationBell) {
+            notificationBell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = window.getComputedStyle(notificationsPanel).display === 'block';
+                notificationsPanel.style.display = isVisible ? 'none' : 'block';
+                if (!isVisible && unreadCount > 0) {
+                    markNotificationsAsRead();
+                }
+            });
+        }
+        
         document.addEventListener('click', (e) => {
-            if (!notificationsPanel.contains(e.target) && e.target !== notificationBell) {
+            if (notificationsPanel && !notificationsPanel.contains(e.target) && !notificationBell.contains(e.target)) {
                 notificationsPanel.style.display = 'none';
             }
         });
 
-
-        // Chama a função pela primeira vez quando a página carrega
+        // --- INICIALIZAÇÃO ---
+        // Inicia o ciclo de busca de notificações assim que a página carrega
         fetchNotifications();
-        // E depois a cada 15 segundos para manter atualizado
         setInterval(fetchNotifications, 15000);
-    </script>
+    });
+</script>
 </body>
 
 </html>

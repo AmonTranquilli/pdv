@@ -1,6 +1,4 @@
-  // --- Variáveis de controle para a notificação sonora ---
-  let idsPedidosPendentesAnteriores = new Set();
-  let isPrimeiraCarga = true;
+
 
 document.addEventListener("DOMContentLoaded", function () {
   carregarPedidos();

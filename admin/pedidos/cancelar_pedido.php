@@ -62,6 +62,19 @@ try {
     while ($item = $result_itens->fetch_assoc()) {
         $stmt_update_estoque->bind_param("ii", $item['quantidade'], $item['id_produto']);
         $stmt_update_estoque->execute();
+        
+        // --- INÍCIO DA LÓGICA DE REATIVAÇÃO AUTOMÁTICA ---
+        
+        // Prepara um statement para verificar o novo estoque e reativar, se necessário.
+        // Fazemos isso para garantir que estamos trabalhando com o valor atualizado.
+        $stmt_check_and_reactivate = $conn->prepare(
+            "UPDATE produtos SET ativo = 1 WHERE id = ? AND controla_estoque = 1 AND estoque > 0"
+        );
+        $stmt_check_and_reactivate->bind_param("i", $item['id_produto']);
+        $stmt_check_and_reactivate->execute();
+        $stmt_check_and_reactivate->close();
+        
+        // --- FIM DA LÓGICA DE REATIVAÇÃO ---
     }
     $stmt_itens->close();
     $stmt_update_estoque->close();

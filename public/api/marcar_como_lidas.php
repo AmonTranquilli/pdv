@@ -1,9 +1,8 @@
 <?php
-// public/api/get_notificacoes.php
+// public/api/marcar_como_lidas.php (VERSÃO FINAL E ROBUSTA)
 session_start();
 header('Content-Type: application/json');
 
-// Simples verificação de segurança para garantir que apenas usuários logados acessem
 if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
     echo json_encode(['sucesso' => false, 'mensagem' => 'Acesso negado.']);
     exit;
@@ -11,30 +10,29 @@ if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
 
 require_once '../../includes/conexao.php';
 
+$response = ['sucesso' => false, 'mensagem' => 'Nenhuma notificação para atualizar.'];
+
 try {
-    // 1. Conta quantas notificações NÃO LIDAS existem
-    $sql_count = "SELECT COUNT(id) as nao_lidas FROM notificacoes WHERE lida = 0";
-    $result_count = $conn->query($sql_count);
-    $contagem = $result_count->fetch_assoc();
-    $nao_lidas_count = $contagem['nao_lidas'] ?? 0;
-
-    // 2. Busca as 10 notificações mais recentes para exibir no painel
-    $sql_notificacoes = "SELECT id, tipo, mensagem, link, data_criacao 
-                         FROM notificacoes 
-                         ORDER BY data_criacao DESC 
-                         LIMIT 10";
-    $result_notificacoes = $conn->query($sql_notificacoes);
-    $notificacoes = $result_notificacoes->fetch_all(MYSQLI_ASSOC);
-
-    // 3. Monta a resposta final em JSON
-    $response = [
-        'sucesso' => true,
-        'nao_lidas' => (int)$nao_lidas_count,
-        'notificacoes' => $notificacoes
-    ];
+    // A query para atualizar todas as notificações não lidas para lidas
+    $sql = "UPDATE notificacoes SET lida = 1 WHERE lida = 0";
+    
+    // Executa a query
+    $conn->query($sql);
+    
+    // --- VERIFICAÇÃO ADICIONADA ---
+    // A propriedade affected_rows nos diz quantas linhas foram realmente alteradas.
+    if ($conn->affected_rows > 0) {
+        // Se uma ou mais linhas foram atualizadas, a operação foi um sucesso.
+        $response = ['sucesso' => true, 'mensagem' => $conn->affected_rows . ' notificação(ões) marcada(s) como lida(s).'];
+    } else {
+        // Se nenhuma linha foi alterada (ou por já estarem lidas, ou por um erro)
+        // consideramos a operação bem-sucedida no sentido de que não há mais não lidas.
+        $response = ['sucesso' => true, 'mensagem' => 'Nenhuma notificação nova para marcar como lida.'];
+    }
 
 } catch (Exception $e) {
-    $response = ['sucesso' => false, 'mensagem' => 'Erro no banco de dados: ' . $e->getMessage()];
+    $response = ['sucesso' => false, 'mensagem' => 'Erro no servidor: ' . $e->getMessage()];
+    error_log("Erro em marcar_como_lidas.php: " . $e->getMessage());
 }
 
 $conn->close();
