@@ -1,6 +1,45 @@
-
+// --- CORREÇÃO: Variáveis de controle declaradas aqui no topo ---
+let idsPedidosPendentesAnteriores = new Set();
+let pedidoIdAtualModal = null;
+let isAlertaSonoroAtivo = false;
+// --- FIM DA SEÇÃO DE VARIÁVEIS GLOBAIS ---
 
 document.addEventListener("DOMContentLoaded", function () {
+  // Adicione este bloco dentro do seu 'DOMContentLoaded'
+  // --- INÍCIO DO CÓDIGO PARA DESBLOQUEAR O ÁUDIO ---
+
+  let audioUnlocked = false;
+  function unlockAudio() {
+    if (audioUnlocked) {
+      // Se o áudio já foi desbloqueado, não faz mais nada
+      document.removeEventListener("click", unlockAudio);
+      return;
+    }
+
+    // Pega todos os players de áudio da página e tenta dar um "play" silencioso
+    document.querySelectorAll("audio").forEach((audioElement) => {
+      audioElement
+        .play()
+        .then(() => {
+          // Se funcionou, pausa imediatamente
+          audioElement.pause();
+          audioElement.currentTime = 0;
+        })
+        .catch((error) => {
+          // Ignora o erro, pois já estamos tentando consertá-lo
+        });
+    });
+
+    audioUnlocked = true;
+    console.log("Contexto de áudio inicializado pela interação do usuário.");
+    // Remove o listener para não rodar de novo
+    document.removeEventListener("click", unlockAudio);
+  }
+
+  // Adiciona o evento de clique ao documento inteiro para rodar a função UMA ÚNICA VEZ
+  document.addEventListener("click", unlockAudio, { once: true });
+
+  // --- FIM DO CÓDIGO PARA DESBLOQUEAR O ÁUDIO ---
   carregarPedidos();
   setInterval(carregarPedidos, 10000);
 
@@ -55,9 +94,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 });
-
-let pedidoIdAtualModal = null;
-
 function showCustomAlert(message, title = "Aviso", type = "info") {
   const modal = document.getElementById("notificationModal");
   const modalContent = modal.querySelector(".modal-content");
@@ -75,11 +111,13 @@ function showCustomAlert(message, title = "Aviso", type = "info") {
     modal.classList.remove("ativo");
 }
 
+// Adicionamos um novo parâmetro: confirmButtonText
 function showCustomConfirm(
   message,
   title,
   onConfirmCallback,
-  type = "confirm"
+  type = "confirm",
+  confirmButtonText = "Sim"
 ) {
   const modal = document.getElementById("notificationModal");
   const modalContent = modal.querySelector(".modal-content");
@@ -91,7 +129,7 @@ function showCustomConfirm(
   }"></i> ${title}`;
   modalMessage.textContent = message;
   modalContent.className = `modal-content notification-modal ${type}`;
-  modalActions.innerHTML = `<button class="btn-aceitar">Sim</button><button class="btn-secondary">Não</button>`;
+  modalActions.innerHTML = `<button class="btn-aceitar">${confirmButtonText}</button><button class="btn-secondary">Não</button>`;
   modal.classList.add("ativo");
   const hideModal = () => modal.classList.remove("ativo");
   modalActions.querySelector(".btn-aceitar").onclick = () => {
@@ -130,54 +168,74 @@ async function finalizarDia() {
 
 // SUBSTITUA SUA FUNÇÃO ATUAL POR ESTA VERSÃO LIMPA
 async function carregarPedidos() {
-    try {
-        const response = await fetch("/pdv/public/api/obter_pedidos_kanban.php");
-        const pedidos = await response.json();
-        if (pedidos.erro) {
-            console.error("Erro ao obter pedidos do Kanban:", pedidos.mensagem);
-            return;
-        }
-
-        // --- Lógica de Notificação Sonora (Versão Final) ---
-        const idsPendentesAtuais = new Set(
-            pedidos.filter((p) => p.status === "pendente").map((p) => p.id)
-        );
-
-        if (!isPrimeiraCarga) {
-            idsPendentesAtuais.forEach((id) => {
-                // Se o ID atual não estava na lista anterior, é um novo pedido
-                if (!idsPedidosPendentesAnteriores.has(id)) {
-                    const som = document.getElementById("somNotificacao");
-                    if (som) {
-                        som.play().catch(error => {
-                            console.error("Falha ao tocar som (bloqueado pelo navegador?):", error);
-                            alert("Novo pedido recebido!"); 
-                        });
-                    } else {
-                        console.error("Elemento de áudio #somNotificacao não encontrado.");
-                    }
-                }
-            });
-        }
-
-        idsPedidosPendentesAnteriores = idsPendentesAtuais;
-        isPrimeiraCarga = false;
-        // --- Fim da Lógica ---
-
-        // Renderiza os cards no Kanban
-        document.querySelectorAll(".cards-container").forEach((c) => (c.innerHTML = ""));
-        pedidos.forEach((pedido) => {
-            const card = criarCardPedido(pedido);
-            const colunaDestino = document.getElementById(
-                `container-${pedido.status.toLowerCase()}`
-            );
-            if (colunaDestino) {
-                colunaDestino.appendChild(card);
-            }
-        });
-    } catch (error) {
-        console.error("Falha ao carregar ou processar pedidos:", error);
+  try {
+    const response = await fetch("/pdv/public/api/obter_pedidos_kanban.php");
+    const pedidos = await response.json();
+    if (pedidos.erro) {
+      console.error("Erro ao obter pedidos do Kanban:", pedidos.mensagem);
+      return;
     }
+
+    // --- LÓGICA DE ALERTA SONORO COM LOOP ---
+    const idsPendentesAtuais = new Set(
+      pedidos.filter((p) => p.status === "pendente").map((p) => p.id)
+    );
+
+    if (!isPrimeiraCarga) {
+      let novoPedidoDetectado = false;
+      idsPendentesAtuais.forEach((id) => {
+        if (!idsPedidosPendentesAnteriores.has(id)) {
+          novoPedidoDetectado = true;
+        }
+      });
+
+      // Se um novo pedido foi detectado E o alerta ainda não estiver ativo
+      if (novoPedidoDetectado && !isAlertaSonoroAtivo) {
+        isAlertaSonoroAtivo = true; // Ativa o "modo alerta"
+        const som = document.getElementById("somNotificacao"); // Usando o ID correto
+
+        if (som) {
+          som.loop = true; // Define o som para tocar em loop
+          som.play().catch((e) => console.error("Erro ao tocar som:", e));
+
+          // Exibe um modal de confirmação especial
+          showCustomConfirm(
+            "Você recebeu um novo pedido!",
+            "Novo Pedido",
+            () => {
+              // Esta função será executada ao clicar em "OK"
+              som.pause();
+              som.currentTime = 0;
+              som.loop = false;
+              isAlertaSonoroAtivo = false; // Desativa o "modo alerta"
+            },
+            "success", // Tipo do modal
+            "OK, Ciente!" // Texto do botão de confirmação
+          );
+        }
+      }
+    }
+
+    idsPedidosPendentesAnteriores = idsPendentesAtuais;
+    isPrimeiraCarga = false;
+    // --- FIM DA LÓGICA DE ALERTA ---
+
+    // Renderiza os cards no Kanban
+    document
+      .querySelectorAll(".cards-container")
+      .forEach((c) => (c.innerHTML = ""));
+    pedidos.forEach((pedido) => {
+      const card = criarCardPedido(pedido);
+      const colunaDestino = document.getElementById(
+        `container-${pedido.status.toLowerCase()}`
+      );
+      if (colunaDestino) {
+        colunaDestino.appendChild(card);
+      }
+    });
+  } catch (error) {
+    console.error("Falha ao carregar ou processar pedidos:", error);
+  }
 }
 
 function criarCardPedido(pedido) {
@@ -393,9 +451,11 @@ async function abrirModalDetalhes(idPedido) {
     if (modalBtnAceitar && modalBtnCancelar) {
       modalBtnAceitar.style.display =
         detalhes.status === "pendente" ? "inline-block" : "none";
-      modalBtnCancelar.style.display = ["pendente", "preparando", "em_entrega"].includes(
-        detalhes.status
-      )
+      modalBtnCancelar.style.display = [
+        "pendente",
+        "preparando",
+        "em_entrega",
+      ].includes(detalhes.status)
         ? "inline-block"
         : "none";
     }
