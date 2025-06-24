@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 12/06/2025 às 21:57
+-- Tempo de geração: 24/06/2025 às 18:45
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -106,7 +106,7 @@ CREATE TABLE `clientes` (
 --
 
 INSERT INTO `clientes` (`id`, `nome`, `telefone`, `endereco`, `ncasa`, `bairro`, `cep`, `ponto_referencia`, `complemento`, `data_cadastro`) VALUES
-(9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', '23090660', '', 'Quadra 24 Lote 18', '2025-06-03 23:29:01'),
+(9, 'Amon Tranquilli', '21977023133', 'Rua Alice CuzCuz', '1254', 'Campo Grande', '23090660', '', '', '2025-06-03 23:29:01'),
 (10, 'Mileni Reis', '21959110306', 'Rua Heitor da Motta ferreira', '317', 'Campo Grande', '', '', '', '2025-06-04 17:09:50');
 
 -- --------------------------------------------------------
@@ -191,7 +191,8 @@ CREATE TABLE `grupos_opcoes` (
 --
 
 INSERT INTO `grupos_opcoes` (`id`, `id_produto_pai`, `nome_grupo`, `tipo_selecao`, `min_opcoes`, `max_opcoes`) VALUES
-(4, 3, 'Turbine seu lanche com um COMBO', 'UNICO', 0, 1);
+(4, 3, 'Turbine seu lanche com um COMBO', 'UNICO', 0, 1),
+(7, 11, 'Escolha sua bebida', 'UNICO', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -215,7 +216,8 @@ CREATE TABLE `itens_grupo` (
 
 INSERT INTO `itens_grupo` (`id`, `id_grupo_opcao`, `tipo`, `nome_item`, `preco_adicional`, `id_produto_vinculado`, `ativo`) VALUES
 (6, 4, 'COMBO', 'Combo Fritas + Coca lata 350ml', 9.99, NULL, 1),
-(7, 4, 'COMBO', 'Combo Fritas + Coca lata Zero 350ml', 9.99, NULL, 1);
+(7, 4, 'COMBO', 'Combo Fritas + Coca lata Zero 350ml', 9.99, NULL, 1),
+(10, 7, 'VINCULADO', 'Coca-Cola 2Litros', 5.00, 2, 1);
 
 -- --------------------------------------------------------
 
@@ -253,18 +255,36 @@ CREATE TABLE `itens_pedido` (
   `nome_produto` varchar(255) NOT NULL,
   `quantidade` int(11) NOT NULL,
   `preco_unitario` decimal(10,2) NOT NULL,
-  `observacao_item` text DEFAULT NULL
+  `observacao_item` text DEFAULT NULL,
+  `detalhes_opcoes` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `notificacoes`
+--
+
+CREATE TABLE `notificacoes` (
+  `id` int(11) NOT NULL,
+  `tipo` varchar(50) NOT NULL,
+  `mensagem` varchar(255) NOT NULL,
+  `link` varchar(255) DEFAULT NULL,
+  `lida` tinyint(1) NOT NULL DEFAULT 0,
+  `data_criacao` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Despejando dados para a tabela `itens_pedido`
+-- Despejando dados para a tabela `notificacoes`
 --
 
-INSERT INTO `itens_pedido` (`id`, `id_pedido`, `id_produto`, `nome_produto`, `quantidade`, `preco_unitario`, `observacao_item`) VALUES
-(174, 117, 3, 'Smash burguer', 1, 22.90, ''),
-(175, 118, 4, 'Coca-Cola Zero 2Litros', 1, 15.00, ''),
-(182, 124, 3, 'Smash burguer', 1, 35.39, ''),
-(183, 125, 3, 'Smash burguer', 1, 45.89, '');
+INSERT INTO `notificacoes` (`id`, `tipo`, `mensagem`, `link`, `lida`, `data_criacao`) VALUES
+(1, 'estoque_baixo', 'Estoque de \'Coca-Cola lata 350ml\' está baixo! Restam apenas 5 unidades.', '/pdv/admin/produtos/editar_produto.php?id=9', 1, '2025-06-22 04:52:45'),
+(2, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 4 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 14:55:25'),
+(3, 'estoque_baixo', 'O estoque de \'Coca-Cola lata 350ml\' acabou e o produto foi desativado!', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 14:58:59'),
+(4, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 1 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 15:23:54'),
+(5, 'estoque_baixo', 'O estoque de \'Coca-Cola lata 350ml\' acabou e o produto foi desativado!', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 15:24:42'),
+(6, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 5 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 17:07:32');
 
 -- --------------------------------------------------------
 
@@ -292,16 +312,6 @@ CREATE TABLE `pedidos` (
   `id_entregador` int(11) DEFAULT NULL,
   `arquivado` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `pedidos`
---
-
-INSERT INTO `pedidos` (`id`, `id_cliente`, `nome_cliente`, `telefone_cliente`, `endereco_entrega`, `numero_entrega`, `bairro_entrega`, `complemento_entrega`, `referencia_entrega`, `data_pedido`, `total_pedido`, `forma_pagamento`, `troco_para`, `troco`, `observacoes_pedido`, `status`, `id_entregador`, `arquivado`) VALUES
-(117, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-10 03:16:09', 27.90, 'cartao', NULL, NULL, '', 'cancelado', NULL, 1),
-(118, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-10 03:16:58', 20.00, 'cartao', NULL, NULL, '', 'cancelado', NULL, 1),
-(124, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-12 11:24:32', 5.00, 'cartao', NULL, NULL, '', 'pendente', NULL, 0),
-(125, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice Ribeiro', 'S/N', 'Campo Grande', 'Quadra 24 Lote 18', '', '2025-06-12 14:50:51', 50.89, 'pix', NULL, NULL, '', 'pendente', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -334,9 +344,11 @@ INSERT INTO `produtos` (`id`, `nome`, `descricao`, `preco`, `id_categoria`, `ima
 (6, 'X-tudo', 'burguer', 12.00, 3, '/pdv/public/uploads/produtos/683d2af63b84c_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
 (7, 'Sprite 2 litros', '', 15.00, 2, '/pdv/public/uploads/produtos/6844f5616f7ee_Sprite.jpeg', 0, 0, 1, 10),
 (8, 'Coca-Cola Zero Lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c61633ef5_622533-coca-cola-zero-lata_1.jpg.webp', 0, 0, 1, 10),
-(9, 'Coca-Cola lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c5fa4c4eb_coca-cola-lata-350-ml-1.webp', 12, 1, 1, 10),
+(9, 'Coca-Cola lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c5fa4c4eb_coca-cola-lata-350-ml-1.webp', 6, 1, 1, 10),
 (10, 'Fritas M', 'Batata frita temperada no sal', 9.99, 4, '/pdv/public/uploads/produtos/6849c65b2f6d2_MC8421_2022-08-08_18_45_10_0_MC8421_0.webp', 0, 0, 1, 10),
-(11, 'Refrigerante 2litros', 'Refrigerante', 0.00, 2, '/pdv/public/uploads/produtos/684a473ea28b6_1000000030.jpg', 0, 0, 1, 10);
+(11, 'Refrigerante 2litros', 'Refrigerante', 0.00, 2, '/pdv/public/uploads/produtos/684a473ea28b6_1000000030.jpg', 0, 0, 1, 10),
+(12, 'Smash Bacon', 'incrivel blend 180 gramas com bacon', 29.90, 3, '/pdv/public/uploads/produtos/684b85f7c0fbe_imrs.avif', 0, 0, 1, 10),
+(13, 'Triple smash cheddar', '3 carnes 120 gramas, 3 fatias de cheddar, pão brioche e maionese temperada artesanal', 34.90, 3, '/pdv/public/uploads/produtos/684b86569e9d7_bf1e20a4462b71e3cc4cece2a8c96ac8_XL.jpg', 0, 0, 1, 10);
 
 -- --------------------------------------------------------
 
@@ -369,9 +381,7 @@ CREATE TABLE `produto_adicional` (
 
 INSERT INTO `produto_adicional` (`id`, `id_produto`, `id_adicional`) VALUES
 (29, 3, 2),
-(30, 3, 1),
-(31, 11, 2),
-(32, 11, 1);
+(30, 3, 1);
 
 -- --------------------------------------------------------
 
@@ -391,7 +401,7 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id`, `nome_usuario`, `senha`, `nivel_acesso`) VALUES
-(1, 'Admin', '$2y$10$tdWSU9OtDoEKBL2cqlcyiudOVSr.VYian0kzE6gNaOvUHrAzj6bY.', 'admin');
+(1, 'Amon', '$2y$10$tdWSU9OtDoEKBL2cqlcyiudOVSr.VYian0kzE6gNaOvUHrAzj6bY.', 'admin');
 
 --
 -- Índices para tabelas despejadas
@@ -473,6 +483,12 @@ ALTER TABLE `itens_pedido`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_pedido` (`id_pedido`),
   ADD KEY `id_produto` (`id_produto`);
+
+--
+-- Índices de tabela `notificacoes`
+--
+ALTER TABLE `notificacoes`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Índices de tabela `pedidos`
@@ -562,13 +578,13 @@ ALTER TABLE `entregadores`
 -- AUTO_INCREMENT de tabela `grupos_opcoes`
 --
 ALTER TABLE `grupos_opcoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `itens_grupo`
 --
 ALTER TABLE `itens_grupo`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de tabela `itens_grupo_combo`
@@ -580,19 +596,25 @@ ALTER TABLE `itens_grupo_combo`
 -- AUTO_INCREMENT de tabela `itens_pedido`
 --
 ALTER TABLE `itens_pedido`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=184;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=249;
+
+--
+-- AUTO_INCREMENT de tabela `notificacoes`
+--
+ALTER TABLE `notificacoes`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de tabela `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
 
 --
 -- AUTO_INCREMENT de tabela `produtos`
 --
 ALTER TABLE `produtos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de tabela `produtos_combo`

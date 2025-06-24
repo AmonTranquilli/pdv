@@ -166,7 +166,6 @@ async function finalizarDia() {
   );
 }
 
-// SUBSTITUA SUA FUNÇÃO ATUAL POR ESTA VERSÃO LIMPA
 async function carregarPedidos() {
   try {
     const response = await fetch("/pdv/public/api/obter_pedidos_kanban.php");
