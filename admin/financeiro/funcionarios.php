@@ -1,5 +1,5 @@
 <?php
-// Arquivo: /admin/financeiro/funcionarios.php (Versão Final Completa)
+// Arquivo: /admin/financeiro/funcionarios.php (Versão Final Completa e Corrigida)
 session_start();
 
 $page_title = 'Gestão de Funcionários';
@@ -14,7 +14,8 @@ require_once '../../includes/conexao.php';
 // --- LÓGICA PARA BUSCAR OS FUNCIONÁRIOS ---
 $funcionarios = [];
 try {
-    $sql = "SELECT id, nome, cargo, valor_diaria FROM funcionarios WHERE ativo = 1 ORDER BY nome ASC";
+    // Adicionada a data_admissao na busca
+    $sql = "SELECT id, nome, cargo, valor_diaria, data_admissao FROM funcionarios WHERE ativo = 1 ORDER BY nome ASC";
     $result = $conn->query($sql);
     if ($result) {
         $funcionarios = $result->fetch_all(MYSQLI_ASSOC);
@@ -182,6 +183,12 @@ ob_start();
         border: none;
         cursor: pointer;
     }
+
+    .btn-action.generate-payment {
+        background-color: #28a745;
+        /* Verde */
+        color: white;
+    }
 </style>
 
 <div class="page-header">
@@ -203,6 +210,7 @@ if (isset($_SESSION['mensagem_sucesso'])) {
                 <th>Nome</th>
                 <th>Cargo</th>
                 <th>Valor da Diária</th>
+                <th>Data de Admissão</th>
                 <th>Ações</th>
             </tr>
         </thead>
@@ -213,23 +221,27 @@ if (isset($_SESSION['mensagem_sucesso'])) {
                         <td><?= htmlspecialchars($funcionario['nome']) ?></td>
                         <td><?= htmlspecialchars($funcionario['cargo']) ?></td>
                         <td>R$ <?= number_format($funcionario['valor_diaria'], 2, ',', '.') ?></td>
+                        <td><?= date('d/m/Y', strtotime($funcionario['data_admissao'])) ?></td>
                         <td class="actions-cell">
                             <a href="editar_funcionario.php?id=<?= $funcionario['id'] ?>" class="btn-action edit" title="Editar Cadastro"><i class="fas fa-edit"></i></a>
                             <button type="button" class="btn-action register-absence" title="Registrar Falta" data-id="<?= $funcionario['id'] ?>" data-nome="<?= htmlspecialchars($funcionario['nome']) ?>"><i class="fas fa-calendar-times"></i></button>
+
+                            <a href="gerar_pagamento.php?id=<?= $funcionario['id'] ?>" class="btn-action generate-payment" title="Gerar Pagamento"><i class="fas fa-file-invoice-dollar"></i></a>
+
                             <button type="button" class="btn-action desativar" title="Desativar Funcionário" data-id="<?= $funcionario['id'] ?>" data-nome="<?= htmlspecialchars($funcionario['nome']) ?>"><i class="fas fa-trash-alt"></i></button>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="4" style="text-align: center; padding: 20px;">Nenhum funcionário cadastrado.</td>
+                    <td colspan="5" style="text-align: center; padding: 20px;">Nenhum funcionário cadastrado.</td>
                 </tr>
             <?php endif; ?>
         </tbody>
     </table>
 </div>
 
-<div id="modalFalta" class="modal-overlay">
+<div id="modalFalta" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <span class="modal-close-btn">&times;</span>
         <h2>Registrar Falta</h2>
@@ -262,26 +274,26 @@ if (isset($_SESSION['mensagem_sucesso'])) {
     document.addEventListener('DOMContentLoaded', function() {
         // --- LÓGICA UNIFICADA PARA OS BOTÕES DE AÇÃO ---
 
-        // Elementos do Modal de Falta
         const modalFalta = document.getElementById('modalFalta');
         const modalFuncionarioNome = document.getElementById('modalFuncionarioNome');
         const modalFuncionarioId = document.getElementById('modalFuncionarioId');
         const formFalta = document.getElementById('formFalta');
         const btnCloseModal = modalFalta.querySelector('.modal-close-btn');
 
-        // Adiciona o evento de clique na tabela inteira (delegação de eventos)
+        // Usa delegação de eventos para os botões da tabela
         document.querySelector('.styled-table tbody').addEventListener('click', function(e) {
-            const target = e.target.closest('.btn-action');
-            if (!target) return;
+            const targetButton = e.target.closest('.btn-action');
+            if (!targetButton) return;
 
-            const funcionarioId = target.getAttribute('data-id');
-            const funcionarioNome = target.getAttribute('data-nome');
+            const funcionarioId = targetButton.getAttribute('data-id');
+            const funcionarioNome = targetButton.getAttribute('data-nome');
 
             // Lógica para DESATIVAR
-            if (target.classList.contains('desativar')) {
+            if (targetButton.classList.contains('desativar')) {
                 if (confirm(`Tem certeza que deseja desativar o funcionário "${funcionarioNome}"?`)) {
                     const formData = new FormData();
                     formData.append('id', funcionarioId);
+
                     fetch('desativar_funcionario.php', {
                             method: 'POST',
                             body: formData
@@ -289,16 +301,14 @@ if (isset($_SESSION['mensagem_sucesso'])) {
                         .then(response => response.json())
                         .then(data => {
                             alert(data.mensagem);
-                            if (data.sucesso) {
-                                window.location.reload();
-                            }
+                            if (data.sucesso) window.location.reload();
                         })
-                        .catch(error => alert('Erro de conexão.'));
+                        .catch(error => alert('Erro de conexão ao desativar.'));
                 }
             }
 
             // Lógica para REGISTRAR FALTA
-            if (target.classList.contains('register-absence')) {
+            if (targetButton.classList.contains('register-absence')) {
                 modalFuncionarioNome.textContent = funcionarioNome;
                 modalFuncionarioId.value = funcionarioId;
                 modalFalta.style.display = 'flex';
@@ -335,10 +345,8 @@ if (isset($_SESSION['mensagem_sucesso'])) {
                     body: JSON.stringify(dadosFalta)
                 });
                 const result = await response.json();
-                alert(result.mensagem); // Mostra sucesso ou erro
-                if (result.sucesso) {
-                    modalFalta.style.display = 'none';
-                }
+                alert(result.mensagem);
+                if (result.sucesso) modalFalta.style.display = 'none';
             } catch (error) {
                 alert('Erro de conexão. Tente novamente.');
             }
