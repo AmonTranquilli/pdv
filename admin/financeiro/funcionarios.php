@@ -189,11 +189,26 @@ ob_start();
         /* Verde */
         color: white;
     }
+
+    .header-actions {
+        display: flex;
+        gap: 10px;
+        /* Cria um espaço entre os botões */
+    }
+
+    .btn-action.grant-vale {
+        background-color: #6f42c1;
+        /* Roxo */
+        color: white;
+    }
 </style>
 
 <div class="page-header">
     <h1><i class="fas fa-users-cog"></i> Gestão de Funcionários</h1>
-    <a href="/pdv/admin/financeiro/cadastrar_funcionario.php" class="btn-new"><i class="fas fa-plus"></i> Cadastrar Novo</a>
+    <div class="header-actions">
+        <a href="/pdv/admin/financeiro/historico_pagamentos.php" class="btn-new"><i class="fas fa-history"></i> Histórico de Pagamentos</a>
+        <a href="/pdv/admin/financeiro/cadastrar_funcionario.php" class="btn-new"><i class="fas fa-plus"></i> Cadastrar Novo</a>
+    </div>
 </div>
 
 <?php
@@ -225,9 +240,8 @@ if (isset($_SESSION['mensagem_sucesso'])) {
                         <td class="actions-cell">
                             <a href="editar_funcionario.php?id=<?= $funcionario['id'] ?>" class="btn-action edit" title="Editar Cadastro"><i class="fas fa-edit"></i></a>
                             <button type="button" class="btn-action register-absence" title="Registrar Falta" data-id="<?= $funcionario['id'] ?>" data-nome="<?= htmlspecialchars($funcionario['nome']) ?>"><i class="fas fa-calendar-times"></i></button>
-
                             <a href="gerar_pagamento.php?id=<?= $funcionario['id'] ?>" class="btn-action generate-payment" title="Gerar Pagamento"><i class="fas fa-file-invoice-dollar"></i></a>
-
+                            <button type="button" class="btn-action grant-vale" title="Conceder Vale" data-id="<?= $funcionario['id'] ?>" data-nome="<?= htmlspecialchars($funcionario['nome']) ?>"><i class="fas fa-hand-holding-usd"></i></button>
                             <button type="button" class="btn-action desativar" title="Desativar Funcionário" data-id="<?= $funcionario['id'] ?>" data-nome="<?= htmlspecialchars($funcionario['nome']) ?>"><i class="fas fa-trash-alt"></i></button>
                         </td>
                     </tr>
@@ -269,64 +283,88 @@ if (isset($_SESSION['mensagem_sucesso'])) {
         </form>
     </div>
 </div>
-
+<div id="modalVale" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="modal-close-btn">&times;</span>
+        <h2>Conceder Vale/Adiantamento</h2>
+        <p>Funcionário: <strong id="modalValeFuncionarioNome"></strong></p>
+        <form id="formVale">
+            <input type="hidden" id="modalValeFuncionarioId" name="id_funcionario">
+            <div class="form-group">
+                <label for="valor_vale">Valor do Vale (R$):</label>
+                <input type="text" id="valor_vale" name="valor_vale" required placeholder="Ex: 50,00">
+            </div>
+            <div class="form-group">
+                <label for="motivo_vale">Motivo (Opcional):</label>
+                <textarea id="motivo_vale" name="motivo_vale" rows="3" placeholder="Ex: Adiantamento para despesa pessoal"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="btn-success">Confirmar Vale</button>
+            </div>
+        </form>
+    </div>
+</div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // --- LÓGICA UNIFICADA PARA OS BOTÕES DE AÇÃO ---
 
+        // Elementos do Modal de Falta
         const modalFalta = document.getElementById('modalFalta');
-        const modalFuncionarioNome = document.getElementById('modalFuncionarioNome');
-        const modalFuncionarioId = document.getElementById('modalFuncionarioId');
         const formFalta = document.getElementById('formFalta');
-        const btnCloseModal = modalFalta.querySelector('.modal-close-btn');
 
-        // Usa delegação de eventos para os botões da tabela
+        // Elementos do Modal de Vale
+        const modalVale = document.getElementById('modalVale');
+        const formVale = document.getElementById('formVale');
+
+        // Função para abrir/fechar modais
+        const toggleModal = (modalElement, show) => {
+            if (modalElement) modalElement.style.display = show ? 'flex' : 'none';
+        };
+
+        // Delegação de eventos na tabela
         document.querySelector('.styled-table tbody').addEventListener('click', function(e) {
             const targetButton = e.target.closest('.btn-action');
             if (!targetButton) return;
 
-            const funcionarioId = targetButton.getAttribute('data-id');
-            const funcionarioNome = targetButton.getAttribute('data-nome');
+            const funcionarioId = targetButton.dataset.id;
+            const funcionarioNome = targetButton.dataset.nome;
 
             // Lógica para DESATIVAR
             if (targetButton.classList.contains('desativar')) {
                 if (confirm(`Tem certeza que deseja desativar o funcionário "${funcionarioNome}"?`)) {
                     const formData = new FormData();
                     formData.append('id', funcionarioId);
-
                     fetch('desativar_funcionario.php', {
                             method: 'POST',
                             body: formData
                         })
-                        .then(response => response.json())
-                        .then(data => {
+                        .then(res => res.json()).then(data => {
                             alert(data.mensagem);
                             if (data.sucesso) window.location.reload();
-                        })
-                        .catch(error => alert('Erro de conexão ao desativar.'));
+                        }).catch(() => alert('Erro de conexão.'));
                 }
             }
-
             // Lógica para REGISTRAR FALTA
-            if (targetButton.classList.contains('register-absence')) {
-                modalFuncionarioNome.textContent = funcionarioNome;
-                modalFuncionarioId.value = funcionarioId;
-                modalFalta.style.display = 'flex';
+            else if (targetButton.classList.contains('register-absence')) {
+                modalFalta.querySelector('#modalFuncionarioNome').textContent = funcionarioNome;
+                modalFalta.querySelector('#modalFuncionarioId').value = funcionarioId;
+                toggleModal(modalFalta, true);
+            }
+            // Lógica para CONCEDER VALE
+            else if (targetButton.classList.contains('grant-vale')) {
+                modalVale.querySelector('#modalValeFuncionarioNome').textContent = funcionarioNome;
+                modalVale.querySelector('#modalValeFuncionarioId').value = funcionarioId;
+                formVale.reset();
+                toggleModal(modalVale, true);
             }
         });
 
-        // Eventos para fechar o modal de falta
-        btnCloseModal.addEventListener('click', () => {
-            modalFalta.style.display = 'none';
-        });
-        modalFalta.addEventListener('click', (e) => {
-            if (e.target === modalFalta) {
-                modalFalta.style.display = 'none';
-            }
-        });
+        // Listeners para fechar os modais
+        modalFalta.querySelector('.modal-close-btn').addEventListener('click', () => toggleModal(modalFalta, false));
+        modalVale.querySelector('.modal-close-btn').addEventListener('click', () => toggleModal(modalVale, false));
 
-        // Evento para salvar a falta ao submeter o formulário
-        formFalta.addEventListener('submit', async function(e) {
+        // Listener para salvar a falta
+         formFalta.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const dadosFalta = {
@@ -351,9 +389,43 @@ if (isset($_SESSION['mensagem_sucesso'])) {
                 alert('Erro de conexão. Tente novamente.');
             }
         });
+
+        // Listener para salvar o vale
+        formVale.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const valorRaw = this.querySelector('#valor_vale').value;
+            const valorFloat = parseFloat(valorRaw.replace('.', '').replace(',', '.'));
+            const funcionarioNome = document.getElementById('modalValeFuncionarioNome').textContent;
+
+            if (isNaN(valorFloat) || valorFloat <= 0) {
+                alert('Por favor, insira um valor válido para o vale.');
+                return;
+            }
+
+            if (confirm(`Deseja dar saída de R$ ${valorFloat.toFixed(2).replace('.', ',')} para ${funcionarioNome} como vale/adiantamento?`)) {
+                const dadosVale = {
+                    id_funcionario: this.querySelector('#modalValeFuncionarioId').value,
+                    valor: valorFloat,
+                    motivo: this.querySelector('#motivo_vale').value
+                };
+                try {
+                    const response = await fetch('registrar_vale.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(dadosVale)
+                    });
+                    const result = await response.json();
+                    alert(result.mensagem);
+                    if (result.sucesso) toggleModal(modalVale, false);
+                } catch (error) {
+                    alert('Erro de conexão ao registrar o vale.');
+                }
+            }
+        });
     });
 </script>
-
 <?php
 $page_content = ob_get_clean();
 include '../template_admin.php';

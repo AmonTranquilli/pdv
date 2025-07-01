@@ -60,14 +60,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt_faltas->execute();
         $faltas_injustificadas = (int)$stmt_faltas->get_result()->fetch_assoc()['total_faltas'];
         $stmt_faltas->close();
+        $stmt_vales = $conn->prepare("SELECT SUM(valor) as total_vales FROM vales_funcionarios WHERE id_funcionario = ? AND id_pagamento_descontado IS NULL");
+        $stmt_vales->bind_param("i", $funcionario_id);
+        $stmt_vales->execute();
+        $total_vales = (float)$stmt_vales->get_result()->fetch_assoc()['total_vales'];
+        $stmt_vales->close();
 
+        // d. Lógica de cálculo detalhada
+        $valor_diaria = (float)$funcionario['valor_diaria'];
+        $salario_bruto = $dias_uteis_no_periodo * $valor_diaria;
+        $desconto_faltas = $faltas_injustificadas * $valor_diaria;
         $dias_a_pagar = $dias_uteis_no_periodo - $faltas_injustificadas;
-        $valor_a_pagar = $dias_a_pagar * (float)$funcionario['valor_diaria'];
+        $valor_a_pagar = $salario_bruto - $desconto_faltas - $total_vales;
 
+        // Guarda todos os detalhes para exibir na tela
         $calculo_detalhes = [
             'dias_uteis' => $dias_uteis_no_periodo,
             'faltas' => $faltas_injustificadas,
             'dias_pagos' => $dias_a_pagar,
+            'salario_bruto' => $salario_bruto,
+            'desconto_faltas' => $desconto_faltas,
+            'total_vales' => $total_vales,
             'valor_final' => $valor_a_pagar
         ];
     } catch (Exception $e) {
@@ -198,6 +211,12 @@ ob_start();
             grid-template-columns: 1fr;
         }
     }
+
+    .result-line.desconto {
+        color: #dc3545;
+        /* Vermelho para indicar um desconto */
+        font-weight: 600;
+    }
 </style>
 
 <div class="page-header">
@@ -236,17 +255,31 @@ ob_start();
 
         <?php if ($calculo_detalhes): ?>
             <div class="calculation-result">
+                <h3 class="result-title">Resumo do Pagamento</h3>
                 <div class="result-line">
-                    <span>Dias úteis no período:</span>
+                    <span>Total de dias de funcionamento:</span>
                     <strong><?= $calculo_detalhes['dias_uteis'] ?></strong>
                 </div>
                 <div class="result-line">
-                    <span>Faltas injustificadas:</span>
+                    <span>Faltas:</span>
                     <strong><?= $calculo_detalhes['faltas'] ?></strong>
                 </div>
                 <div class="result-line">
                     <span>Total de diárias a pagar:</span>
                     <strong><?= $calculo_detalhes['dias_pagos'] ?></strong>
+                </div>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 10px 0;">
+                <div class="result-line">
+                    <span>Salário Bruto (Dias de Funcionamento x valor):</span>
+                    <strong>R$ <?= number_format($calculo_detalhes['salario_bruto'], 2, ',', '.') ?></strong>
+                </div>
+                <div class="result-line desconto">
+                    <span>(-) Faltas no período:</span>
+                    <strong>- R$ <?= number_format($calculo_detalhes['desconto_faltas'], 2, ',', '.') ?></strong>
+                </div>
+                <div class="result-line desconto">
+                    <span>(-) Vales / Adiantamentos:</span>
+                    <strong>- R$ <?= number_format($calculo_detalhes['total_vales'], 2, ',', '.') ?></strong>
                 </div>
                 <div class="result-line total">
                     <span>Valor Final a Pagar:</span>
@@ -259,7 +292,65 @@ ob_start();
         <?php endif; ?>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Pega o botão de registrar pagamento, se ele existir na página
+        const btnRegisterPayment = document.querySelector('.btn-register-payment');
 
+        // Adiciona o evento de clique SÓ se o botão existir
+        if (btnRegisterPayment) {
+            btnRegisterPayment.addEventListener('click', async function() {
+
+                // Pede uma última confirmação ao usuário
+                if (!confirm('Você confirma que realizou este pagamento e deseja registrá-lo no sistema? Esta ação não pode ser desfeita.')) {
+                    return; // Se o usuário clicar em "Cancelar", a função para aqui
+                }
+
+                // Desabilita o botão para evitar cliques duplos
+                this.disabled = true;
+                this.textContent = 'Registrando...';
+
+                // Coleta todos os dados necessários para a API diretamente das variáveis PHP
+                const dadosPagamento = {
+                    id_funcionario: <?= $funcionario['id'] ?>,
+                    valor_pago: <?= $calculo_detalhes['valor_final'] ?? 0 ?>,
+                    periodo_inicio: '<?= $data_inicio ?>',
+                    periodo_fim: '<?= $data_fim ?>',
+                    dias_trabalhados: <?= $calculo_detalhes['dias_pagos'] ?? 0 ?>,
+                    faltas_descontadas: <?= $calculo_detalhes['faltas'] ?? 0 ?>
+                };
+
+                // Faz a chamada para a nova API
+                try {
+                    const response = await fetch('registrar_pagamento.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(dadosPagamento)
+                    });
+                    const result = await response.json();
+
+                    alert(result.mensagem); // Mostra a mensagem de sucesso ou erro
+
+                    if (result.sucesso) {
+                        // Se o registro foi bem-sucedido, redireciona para a lista de funcionários
+                        window.location.href = 'funcionarios.php';
+                    } else {
+                        // Se deu erro, reabilita o botão
+                        this.disabled = false;
+                        this.textContent = 'Confirmar e Registrar Pagamento';
+                    }
+                } catch (error) {
+                    alert('Erro de conexão. Não foi possível registrar o pagamento.');
+                    console.error('Erro:', error);
+                    this.disabled = false;
+                    this.textContent = 'Confirmar e Registrar Pagamento';
+                }
+            });
+        }
+    });
+</script>
 <?php
 $page_content = ob_get_clean();
 include '../template_admin.php';
