@@ -21,35 +21,51 @@ $nivel_acesso = $_SESSION['nivel_acesso'] ?? 'N/A';
     <div class="sidebar" id="sidebar">
         <h2>Painel Admin</h2>
         <ul>
-            <li class="menu-header"><span>OPERAÇÕES</span></li>
-            <li><a href="/pdv/admin/dashboard.php"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
-            <li><a href="/pdv/admin/gestor_pedidos/index.php"><i class="fas fa-tasks"></i> <span>Gestor de Pedidos</span></a></li>
+            <li class="menu-header"><span>GERENCIAL</span></li>
             <li class="has-submenu">
-                <a href="#"><i class="fas fa-chart-line"></i> <span>Financeiro</span> <i class="fas fa-chevron-down arrow"></i></a>
+                <a href="#"><i class="fas fa-chart-line"></i> <span>Análises</span> <i class="fas fa-chevron-down arrow"></i></a>
                 <ul class="submenu">
-                    <li><a href="/pdv/admin/financeiro/dashboard.php"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
-                    <li><a href="/pdv/admin/financeiro/metas.php"><i class="fas fa-bullseye"></i> Metas</a></li>
-                    <li><a href="/pdv/admin/financeiro/funcionarios.php"><i class="fas fa-users-cog"></i> Funcionários</a></li>
-                    <li><a href="/pdv/admin/financeiro/contas.php"><i class="fas fa-file-invoice-dollar"></i> Contas a Pagar</a></li>
+                    <li><a href="/pdv/admin/dashboard.php">Dashboard Geral</a></li>
+                    <li><a href="/pdv/admin/financeiro/dashboard.php">Dashboard Financeiro</a></li>
                 </ul>
             </li>
-            <li><a href="/pdv/admin/pedidos/pedidos.php"><i class="fas fa-history"></i> <span>Histórico de Pedidos</span></a></li>
-            <li><a href="/pdv/admin/cardapio/index.php"><i class="fa-solid fa-gear"></i>Configurações da loja</a></li>
+            <li>
+                <a href="/pdv/admin/cardapio/index.php">
+                    <i class="fas fa-cog"></i> <span>Configurações da Loja</span>
+                </a>
+            </li>
 
-
-            <li class="menu-header"><span>CARDÁPIO</span></li>
+            <li class="menu-header"><span>OPERACIONAL</span></li>
+            <li>
+                <a href="/pdv/admin/gestor_pedidos/index.php"><i class="fas fa-tasks"></i> <span>Gestor de Pedidos</span></a>
+            </li>
+            <li>
+                <a href="/pdv/admin/pedidos/pedidos.php"><i class="fas fa-history"></i> <span>Histórico de Pedidos</span></a>
+            </li>
+            <li class="menu-header"><span>FINANCEIRO</span></li>
             <li class="has-submenu">
-                <a href="#"><i class="fas fa-book-open"></i> <span>Gerenciar Itens</span> <i class="fas fa-chevron-down arrow"></i></a>
+                <a href="#"><i class="fas fa-users-cog"></i> <span>Funcionários</span> <i class="fas fa-chevron-down arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="/pdv/admin/financeiro/funcionarios.php">Gestão de Funcionários</a></li>
+                    <li><a href="/pdv/admin/financeiro/historico_pagamentos.php">Histórico de Pagamentos</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="/pdv/admin/financeiro/contas.php"><i class="fas fa-file-invoice-dollar"></i> <span>Contas a Pagar</span></a>
+            </li>
+
+
+            <li class="menu-header"><span>CADASTROS</span></li>
+            <li class="has-submenu">
+                <a href="#"><i class="fas fa-book-open"></i> <span>Cardápio</span> <i class="fas fa-chevron-down arrow"></i></a>
                 <ul class="submenu">
                     <li><a href="/pdv/admin/produtos/produtos.php">Produtos</a></li>
                     <li><a href="/pdv/admin/categorias/categorias.php">Categorias</a></li>
                     <li><a href="/pdv/admin/adicionais/adicionais.php">Adicionais</a></li>
                 </ul>
             </li>
-
-            <li class="menu-header"><span>PESSOAS</span></li>
             <li class="has-submenu">
-                <a href="#"><i class="fas fa-users"></i> <span>Usuários</span> <i class="fas fa-chevron-down arrow"></i></a>
+                <a href="#"><i class="fas fa-users"></i> <span>Pessoas</span> <i class="fas fa-chevron-down arrow"></i></a>
                 <ul class="submenu">
                     <li><a href="/pdv/admin/clientes/clientes.php">Clientes</a></li>
                     <li><a href="/pdv/admin/entregadores/index.php">Entregadores</a></li>

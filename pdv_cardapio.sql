@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 24/06/2025 às 18:45
+-- Tempo de geração: 01/07/2025 às 05:31
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -106,7 +106,7 @@ CREATE TABLE `clientes` (
 --
 
 INSERT INTO `clientes` (`id`, `nome`, `telefone`, `endereco`, `ncasa`, `bairro`, `cep`, `ponto_referencia`, `complemento`, `data_cadastro`) VALUES
-(9, 'Amon Tranquilli', '21977023133', 'Rua Alice CuzCuz', '1254', 'Campo Grande', '23090660', '', '', '2025-06-03 23:29:01'),
+(9, '<script>alert(1)</script>', '21977023133', 'Rua Alice CuzCuz', '1254', 'Campo Grande', '23090660', '', '', '2025-06-03 23:29:01'),
 (10, 'Mileni Reis', '21959110306', 'Rua Heitor da Motta ferreira', '317', 'Campo Grande', '', '', '', '2025-06-04 17:09:50');
 
 -- --------------------------------------------------------
@@ -131,7 +131,7 @@ CREATE TABLE `configuracoes_loja` (
 --
 
 INSERT INTO `configuracoes_loja` (`id`, `nome_hamburgueria`, `horario_funcionamento`, `pedido_minimo`, `hora_abertura`, `hora_fechamento`, `dias_abertura`, `taxa_entrega`) VALUES
-(1, 'Prisma Lanches', 'Funcionamos de Quinta à Segunda das 18:00 até 23:59', 15.00, '00:00:00', '23:59:00', '1,2,3,4,5,6,7', 5.00);
+(1, 'Prisma Lanches', 'Funcionamos de Quinta à Segunda das 18:00 até 23:59', 15.00, '00:00:00', '23:59:00', '1,4,5,6,7', 5.00);
 
 -- --------------------------------------------------------
 
@@ -170,6 +170,32 @@ CREATE TABLE `entregadores` (
 
 INSERT INTO `entregadores` (`id`, `nome`, `codigo_entregador`, `ativo`, `data_cadastro`) VALUES
 (1, 'Amon Tranquilli', '1', 1, '2025-06-06 14:44:19');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `funcionarios`
+--
+
+CREATE TABLE `funcionarios` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(255) NOT NULL,
+  `cargo` varchar(100) DEFAULT NULL,
+  `valor_diaria` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `periodo_pagamento` enum('semanal','quinzenal','mensal') NOT NULL DEFAULT 'semanal',
+  `data_admissao` date NOT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT 1,
+  `data_criacao` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `funcionarios`
+--
+
+INSERT INTO `funcionarios` (`id`, `nome`, `cargo`, `valor_diaria`, `periodo_pagamento`, `data_admissao`, `ativo`, `data_criacao`) VALUES
+(1, 'Mileni Reis', 'Caixa', 50.00, '', '2025-06-26', 1, '2025-06-26 14:06:46'),
+(2, 'Amon Tranquilli', 'Motoboy', 60.00, '', '2025-06-26', 1, '2025-06-26 14:09:56'),
+(3, 'Daniel Tranquilli', 'Chapeiro', 80.00, '', '2025-06-26', 1, '2025-06-26 14:11:26');
 
 -- --------------------------------------------------------
 
@@ -259,6 +285,16 @@ CREATE TABLE `itens_pedido` (
   `detalhes_opcoes` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Despejando dados para a tabela `itens_pedido`
+--
+
+INSERT INTO `itens_pedido` (`id`, `id_pedido`, `id_produto`, `nome_produto`, `quantidade`, `preco_unitario`, `observacao_item`, `detalhes_opcoes`) VALUES
+(276, 171, 3, 'Smash burguer', 1, 54.39, '', '+ Combo Fritas + Coca lata 350ml<br>+ 5x Adicional de carne<br>+ 3x Cebola Roxa'),
+(277, 171, 9, 'Coca-Cola lata 350ml', 1, 5.00, '', ''),
+(278, 172, 3, 'Smash burguer', 1, 22.90, '', ''),
+(279, 172, 2, 'Coca-Cola 2Litros', 1, 15.00, '', '');
+
 -- --------------------------------------------------------
 
 --
@@ -284,7 +320,37 @@ INSERT INTO `notificacoes` (`id`, `tipo`, `mensagem`, `link`, `lida`, `data_cria
 (3, 'estoque_baixo', 'O estoque de \'Coca-Cola lata 350ml\' acabou e o produto foi desativado!', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 14:58:59'),
 (4, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 1 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 15:23:54'),
 (5, 'estoque_baixo', 'O estoque de \'Coca-Cola lata 350ml\' acabou e o produto foi desativado!', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 15:24:42'),
-(6, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 5 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 17:07:32');
+(6, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 5 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-22 17:07:32'),
+(7, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 5 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-25 14:04:01'),
+(8, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 5 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-25 16:49:16'),
+(9, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 5 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-25 18:21:29'),
+(10, 'estoque_baixo', 'O estoque de \'Coca-Cola 2Litros\' acabou e o produto foi desativado!', '/pdv/admin/produtos/produtos.php', 1, '2025-06-26 17:32:18'),
+(11, 'estoque_baixo', 'Atenção: Estoque de \'Coca-Cola lata 350ml\' está crítico! Restam apenas 5 unidades.', '/pdv/admin/produtos/produtos.php', 1, '2025-06-27 04:29:48'),
+(12, 'estoque_baixo', 'O estoque de \'Coca-Cola 2Litros\' acabou e o produto foi desativado!', '/pdv/admin/produtos/produtos.php', 1, '2025-06-27 04:30:46');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `pagamentos_funcionarios`
+--
+
+CREATE TABLE `pagamentos_funcionarios` (
+  `id` int(11) NOT NULL,
+  `id_funcionario` int(11) NOT NULL,
+  `valor_pago` decimal(10,2) NOT NULL,
+  `periodo_inicio` date NOT NULL,
+  `periodo_fim` date NOT NULL,
+  `dias_trabalhados` int(11) NOT NULL,
+  `faltas_descontadas` int(11) NOT NULL,
+  `data_pagamento` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `pagamentos_funcionarios`
+--
+
+INSERT INTO `pagamentos_funcionarios` (`id`, `id_funcionario`, `valor_pago`, `periodo_inicio`, `periodo_fim`, `dias_trabalhados`, `faltas_descontadas`, `data_pagamento`) VALUES
+(5, 2, 140.00, '2025-06-30', '2025-07-06', 4, 1, '2025-07-01 03:29:24');
 
 -- --------------------------------------------------------
 
@@ -312,6 +378,14 @@ CREATE TABLE `pedidos` (
   `id_entregador` int(11) DEFAULT NULL,
   `arquivado` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `pedidos`
+--
+
+INSERT INTO `pedidos` (`id`, `id_cliente`, `nome_cliente`, `telefone_cliente`, `endereco_entrega`, `numero_entrega`, `bairro_entrega`, `complemento_entrega`, `referencia_entrega`, `data_pedido`, `total_pedido`, `forma_pagamento`, `troco_para`, `troco`, `observacoes_pedido`, `status`, `id_entregador`, `arquivado`) VALUES
+(171, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice CuzCuz', '1254', 'Campo Grande', '', '', '2025-06-27 01:29:48', 64.39, 'cartao', NULL, NULL, '', 'cancelado', NULL, 0),
+(172, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice CuzCuz', '1254', 'Campo Grande', '', '', '2025-06-27 01:30:45', 42.90, 'pix', NULL, NULL, '', 'cancelado', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -386,6 +460,28 @@ INSERT INTO `produto_adicional` (`id`, `id_produto`, `id_adicional`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `registros_diarios_funcionarios`
+--
+
+CREATE TABLE `registros_diarios_funcionarios` (
+  `id` int(11) NOT NULL,
+  `id_funcionario` int(11) NOT NULL,
+  `data_registro` date NOT NULL,
+  `tipo_registro` enum('FALTA_JUSTIFICADA','FALTA_INJUSTIFICADA') NOT NULL,
+  `observacao` text DEFAULT NULL,
+  `data_criacao` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `registros_diarios_funcionarios`
+--
+
+INSERT INTO `registros_diarios_funcionarios` (`id`, `id_funcionario`, `data_registro`, `tipo_registro`, `observacao`, `data_criacao`) VALUES
+(3, 2, '2025-06-30', 'FALTA_INJUSTIFICADA', 'Pneu furou', '2025-07-01 03:14:52');
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `usuarios`
 --
 
@@ -402,6 +498,28 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`id`, `nome_usuario`, `senha`, `nivel_acesso`) VALUES
 (1, 'Amon', '$2y$10$tdWSU9OtDoEKBL2cqlcyiudOVSr.VYian0kzE6gNaOvUHrAzj6bY.', 'admin');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `vales_funcionarios`
+--
+
+CREATE TABLE `vales_funcionarios` (
+  `id` int(11) NOT NULL,
+  `id_funcionario` int(11) NOT NULL,
+  `valor` decimal(10,2) NOT NULL,
+  `motivo` varchar(255) DEFAULT NULL,
+  `data_vale` timestamp NOT NULL DEFAULT current_timestamp(),
+  `id_pagamento_descontado` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `vales_funcionarios`
+--
+
+INSERT INTO `vales_funcionarios` (`id`, `id_funcionario`, `valor`, `motivo`, `data_vale`, `id_pagamento_descontado`) VALUES
+(4, 2, 100.00, 'Adiantamento pra comprar Gás', '2025-07-01 03:14:30', NULL);
 
 --
 -- Índices para tabelas despejadas
@@ -454,6 +572,12 @@ ALTER TABLE `entregadores`
   ADD UNIQUE KEY `codigo_entregador_unico` (`codigo_entregador`);
 
 --
+-- Índices de tabela `funcionarios`
+--
+ALTER TABLE `funcionarios`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Índices de tabela `grupos_opcoes`
 --
 ALTER TABLE `grupos_opcoes`
@@ -491,6 +615,13 @@ ALTER TABLE `notificacoes`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `pagamentos_funcionarios`
+--
+ALTER TABLE `pagamentos_funcionarios`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_funcionario` (`id_funcionario`);
+
+--
 -- Índices de tabela `pedidos`
 --
 ALTER TABLE `pedidos`
@@ -522,11 +653,24 @@ ALTER TABLE `produto_adicional`
   ADD KEY `id_adicional` (`id_adicional`);
 
 --
+-- Índices de tabela `registros_diarios_funcionarios`
+--
+ALTER TABLE `registros_diarios_funcionarios`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_funcionario` (`id_funcionario`);
+
+--
 -- Índices de tabela `usuarios`
 --
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `nome_usuario` (`nome_usuario`);
+
+--
+-- Índices de tabela `vales_funcionarios`
+--
+ALTER TABLE `vales_funcionarios`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- AUTO_INCREMENT para tabelas despejadas
@@ -575,6 +719,12 @@ ALTER TABLE `entregadores`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT de tabela `funcionarios`
+--
+ALTER TABLE `funcionarios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT de tabela `grupos_opcoes`
 --
 ALTER TABLE `grupos_opcoes`
@@ -596,19 +746,25 @@ ALTER TABLE `itens_grupo_combo`
 -- AUTO_INCREMENT de tabela `itens_pedido`
 --
 ALTER TABLE `itens_pedido`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=249;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=280;
 
 --
 -- AUTO_INCREMENT de tabela `notificacoes`
 --
 ALTER TABLE `notificacoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT de tabela `pagamentos_funcionarios`
+--
+ALTER TABLE `pagamentos_funcionarios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de tabela `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT de tabela `produtos`
@@ -629,10 +785,22 @@ ALTER TABLE `produto_adicional`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
+-- AUTO_INCREMENT de tabela `registros_diarios_funcionarios`
+--
+ALTER TABLE `registros_diarios_funcionarios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT de tabela `usuarios`
 --
 ALTER TABLE `usuarios`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `vales_funcionarios`
+--
+ALTER TABLE `vales_funcionarios`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Restrições para tabelas despejadas
@@ -673,6 +841,12 @@ ALTER TABLE `itens_pedido`
   ADD CONSTRAINT `itens_pedido_ibfk_2` FOREIGN KEY (`id_produto`) REFERENCES `produtos` (`id`) ON DELETE SET NULL;
 
 --
+-- Restrições para tabelas `pagamentos_funcionarios`
+--
+ALTER TABLE `pagamentos_funcionarios`
+  ADD CONSTRAINT `pagamentos_funcionarios_ibfk_1` FOREIGN KEY (`id_funcionario`) REFERENCES `funcionarios` (`id`);
+
+--
 -- Restrições para tabelas `pedidos`
 --
 ALTER TABLE `pedidos`
@@ -698,6 +872,12 @@ ALTER TABLE `produtos_combo`
 ALTER TABLE `produto_adicional`
   ADD CONSTRAINT `pa_adicional_fk` FOREIGN KEY (`id_adicional`) REFERENCES `adicionais` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `pa_produto_fk` FOREIGN KEY (`id_produto`) REFERENCES `produtos` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `registros_diarios_funcionarios`
+--
+ALTER TABLE `registros_diarios_funcionarios`
+  ADD CONSTRAINT `registros_diarios_funcionarios_ibfk_1` FOREIGN KEY (`id_funcionario`) REFERENCES `funcionarios` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
