@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 01/07/2025 às 05:31
+-- Tempo de geração: 01/07/2025 às 22:38
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -136,6 +136,23 @@ INSERT INTO `configuracoes_loja` (`id`, `nome_hamburgueria`, `horario_funcioname
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `contas_a_pagar`
+--
+
+CREATE TABLE `contas_a_pagar` (
+  `id` int(11) NOT NULL,
+  `id_movimentacao_estoque` int(11) DEFAULT NULL COMMENT 'Para vincular a uma entrada de compra',
+  `fornecedor` varchar(255) DEFAULT NULL,
+  `valor_boleto` decimal(10,2) NOT NULL,
+  `data_vencimento` date NOT NULL,
+  `codigo_boleto` varchar(255) DEFAULT NULL,
+  `status` enum('PENDENTE','PAGO') NOT NULL DEFAULT 'PENDENTE',
+  `data_criacao` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `cupons`
 --
 
@@ -217,8 +234,7 @@ CREATE TABLE `grupos_opcoes` (
 --
 
 INSERT INTO `grupos_opcoes` (`id`, `id_produto_pai`, `nome_grupo`, `tipo_selecao`, `min_opcoes`, `max_opcoes`) VALUES
-(4, 3, 'Turbine seu lanche com um COMBO', 'UNICO', 0, 1),
-(7, 11, 'Escolha sua bebida', 'UNICO', 1, 1);
+(4, 3, 'Turbine seu lanche com um COMBO', 'UNICO', 0, 1);
 
 -- --------------------------------------------------------
 
@@ -242,8 +258,7 @@ CREATE TABLE `itens_grupo` (
 
 INSERT INTO `itens_grupo` (`id`, `id_grupo_opcao`, `tipo`, `nome_item`, `preco_adicional`, `id_produto_vinculado`, `ativo`) VALUES
 (6, 4, 'COMBO', 'Combo Fritas + Coca lata 350ml', 9.99, NULL, 1),
-(7, 4, 'COMBO', 'Combo Fritas + Coca lata Zero 350ml', 9.99, NULL, 1),
-(10, 7, 'VINCULADO', 'Coca-Cola 2Litros', 5.00, 2, 1);
+(7, 4, 'COMBO', 'Combo Fritas + Coca lata Zero 350ml', 9.99, NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -285,15 +300,30 @@ CREATE TABLE `itens_pedido` (
   `detalhes_opcoes` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
 --
--- Despejando dados para a tabela `itens_pedido`
+-- Estrutura para tabela `movimentacoes_estoque`
 --
 
-INSERT INTO `itens_pedido` (`id`, `id_pedido`, `id_produto`, `nome_produto`, `quantidade`, `preco_unitario`, `observacao_item`, `detalhes_opcoes`) VALUES
-(276, 171, 3, 'Smash burguer', 1, 54.39, '', '+ Combo Fritas + Coca lata 350ml<br>+ 5x Adicional de carne<br>+ 3x Cebola Roxa'),
-(277, 171, 9, 'Coca-Cola lata 350ml', 1, 5.00, '', ''),
-(278, 172, 3, 'Smash burguer', 1, 22.90, '', ''),
-(279, 172, 2, 'Coca-Cola 2Litros', 1, 15.00, '', '');
+CREATE TABLE `movimentacoes_estoque` (
+  `id` int(11) NOT NULL,
+  `id_produto` int(11) NOT NULL,
+  `quantidade` int(11) NOT NULL COMMENT 'Positivo para entradas, Negativo para saídas',
+  `tipo_movimento` varchar(50) NOT NULL COMMENT 'Ex: ENTRADA_COMPRA, SAIDA_VENDA, AJUSTE_PERDA',
+  `observacao` text DEFAULT NULL,
+  `id_usuario` int(11) DEFAULT NULL,
+  `id_pedido` int(11) DEFAULT NULL COMMENT 'Para vincular a uma venda',
+  `data_movimento` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `movimentacoes_estoque`
+--
+
+INSERT INTO `movimentacoes_estoque` (`id`, `id_produto`, `quantidade`, `tipo_movimento`, `observacao`, `id_usuario`, `id_pedido`, `data_movimento`) VALUES
+(1, 2, 1, 'AJUSTE_MANUAL', 'acerto', NULL, NULL, '2025-07-01 19:35:29'),
+(2, 2, -1, 'AJUSTE_MANUAL', 'mentira achei nada n', NULL, NULL, '2025-07-01 19:35:48');
 
 -- --------------------------------------------------------
 
@@ -350,7 +380,7 @@ CREATE TABLE `pagamentos_funcionarios` (
 --
 
 INSERT INTO `pagamentos_funcionarios` (`id`, `id_funcionario`, `valor_pago`, `periodo_inicio`, `periodo_fim`, `dias_trabalhados`, `faltas_descontadas`, `data_pagamento`) VALUES
-(5, 2, 140.00, '2025-06-30', '2025-07-06', 4, 1, '2025-07-01 03:29:24');
+(8, 1, 150.00, '2025-06-30', '2025-07-06', 4, 1, '2025-07-01 15:55:01');
 
 -- --------------------------------------------------------
 
@@ -379,14 +409,6 @@ CREATE TABLE `pedidos` (
   `arquivado` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Despejando dados para a tabela `pedidos`
---
-
-INSERT INTO `pedidos` (`id`, `id_cliente`, `nome_cliente`, `telefone_cliente`, `endereco_entrega`, `numero_entrega`, `bairro_entrega`, `complemento_entrega`, `referencia_entrega`, `data_pedido`, `total_pedido`, `forma_pagamento`, `troco_para`, `troco`, `observacoes_pedido`, `status`, `id_entregador`, `arquivado`) VALUES
-(171, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice CuzCuz', '1254', 'Campo Grande', '', '', '2025-06-27 01:29:48', 64.39, 'cartao', NULL, NULL, '', 'cancelado', NULL, 0),
-(172, 9, 'Amon Tranquilli', '21977023133', 'Rua Alice CuzCuz', '1254', 'Campo Grande', '', '', '2025-06-27 01:30:45', 42.90, 'pix', NULL, NULL, '', 'cancelado', NULL, 0);
-
 -- --------------------------------------------------------
 
 --
@@ -413,14 +435,13 @@ CREATE TABLE `produtos` (
 INSERT INTO `produtos` (`id`, `nome`, `descricao`, `preco`, `id_categoria`, `imagem`, `estoque`, `controla_estoque`, `ativo`, `max_adicionais_opcionais`) VALUES
 (2, 'Coca-Cola 2Litros', 'coquinha gelada', 15.00, 2, '/pdv/public/uploads/produtos/68373f542b325_Screenshot_5.png', 1, 1, 1, 10),
 (3, 'Smash burguer', 'pao carne queijo ovo', 22.90, 3, '/pdv/public/uploads/produtos/6837b16a29945_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
-(4, 'Coca-Cola Zero 2Litros', 'Coquinha zero', 15.00, 2, '/pdv/public/uploads/produtos/6837b4cbc0e5d_coca_cola_zero_pet_2l_23_1_490ec0e29bce8cc50dc0904868b15490.webp', 0, 0, 1, 10),
-(5, 'Del Valle Uva 290ml', 'hmmmmm uvinha', 5.00, 2, '/pdv/public/uploads/produtos/6837c12474bae_dellvale uva.webp', 0, 0, 1, 10),
+(4, 'Coca-Cola Zero 2Litros', 'Coquinha zero', 15.00, 2, '/pdv/public/uploads/produtos/6837b4cbc0e5d_coca_cola_zero_pet_2l_23_1_490ec0e29bce8cc50dc0904868b15490.webp', 12, 1, 1, 10),
+(5, 'Del Valle Uva 290ml', 'hmmmmm uvinha', 5.00, 2, '/pdv/public/uploads/produtos/6837c12474bae_dellvale uva.webp', 5, 1, 1, 10),
 (6, 'X-tudo', 'burguer', 12.00, 3, '/pdv/public/uploads/produtos/683d2af63b84c_Hamburgueria_Bob_Beef_-_Smash_Duplo_-_Foto_Tomas_Rangel.jpg', 0, 0, 1, 10),
-(7, 'Sprite 2 litros', '', 15.00, 2, '/pdv/public/uploads/produtos/6844f5616f7ee_Sprite.jpeg', 0, 0, 1, 10),
-(8, 'Coca-Cola Zero Lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c61633ef5_622533-coca-cola-zero-lata_1.jpg.webp', 0, 0, 1, 10),
+(7, 'Sprite 2 litros', '', 15.00, 2, '/pdv/public/uploads/produtos/6844f5616f7ee_Sprite.jpeg', 12, 1, 1, 10),
+(8, 'Coca-Cola Zero Lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c61633ef5_622533-coca-cola-zero-lata_1.jpg.webp', 12, 1, 1, 10),
 (9, 'Coca-Cola lata 350ml', '', 5.00, 2, '/pdv/public/uploads/produtos/6849c5fa4c4eb_coca-cola-lata-350-ml-1.webp', 6, 1, 1, 10),
 (10, 'Fritas M', 'Batata frita temperada no sal', 9.99, 4, '/pdv/public/uploads/produtos/6849c65b2f6d2_MC8421_2022-08-08_18_45_10_0_MC8421_0.webp', 0, 0, 1, 10),
-(11, 'Refrigerante 2litros', 'Refrigerante', 0.00, 2, '/pdv/public/uploads/produtos/684a473ea28b6_1000000030.jpg', 0, 0, 1, 10),
 (12, 'Smash Bacon', 'incrivel blend 180 gramas com bacon', 29.90, 3, '/pdv/public/uploads/produtos/684b85f7c0fbe_imrs.avif', 0, 0, 1, 10),
 (13, 'Triple smash cheddar', '3 carnes 120 gramas, 3 fatias de cheddar, pão brioche e maionese temperada artesanal', 34.90, 3, '/pdv/public/uploads/produtos/684b86569e9d7_bf1e20a4462b71e3cc4cece2a8c96ac8_XL.jpg', 0, 0, 1, 10);
 
@@ -477,7 +498,7 @@ CREATE TABLE `registros_diarios_funcionarios` (
 --
 
 INSERT INTO `registros_diarios_funcionarios` (`id`, `id_funcionario`, `data_registro`, `tipo_registro`, `observacao`, `data_criacao`) VALUES
-(3, 2, '2025-06-30', 'FALTA_INJUSTIFICADA', 'Pneu furou', '2025-07-01 03:14:52');
+(4, 1, '2025-07-05', 'FALTA_INJUSTIFICADA', 'Colica extrema', '2025-07-01 15:53:41');
 
 -- --------------------------------------------------------
 
@@ -519,7 +540,7 @@ CREATE TABLE `vales_funcionarios` (
 --
 
 INSERT INTO `vales_funcionarios` (`id`, `id_funcionario`, `valor`, `motivo`, `data_vale`, `id_pagamento_descontado`) VALUES
-(4, 2, 100.00, 'Adiantamento pra comprar Gás', '2025-07-01 03:14:30', NULL);
+(5, 1, 50.00, 'Comprar roupa que vais usar 1x na vida', '2025-07-01 15:52:51', 8);
 
 --
 -- Índices para tabelas despejadas
@@ -555,6 +576,12 @@ ALTER TABLE `clientes`
 -- Índices de tabela `configuracoes_loja`
 --
 ALTER TABLE `configuracoes_loja`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `contas_a_pagar`
+--
+ALTER TABLE `contas_a_pagar`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -606,6 +633,13 @@ ALTER TABLE `itens_grupo_combo`
 ALTER TABLE `itens_pedido`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_pedido` (`id_pedido`),
+  ADD KEY `id_produto` (`id_produto`);
+
+--
+-- Índices de tabela `movimentacoes_estoque`
+--
+ALTER TABLE `movimentacoes_estoque`
+  ADD PRIMARY KEY (`id`),
   ADD KEY `id_produto` (`id_produto`);
 
 --
@@ -707,6 +741,12 @@ ALTER TABLE `configuracoes_loja`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT de tabela `contas_a_pagar`
+--
+ALTER TABLE `contas_a_pagar`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `cupons`
 --
 ALTER TABLE `cupons`
@@ -749,6 +789,12 @@ ALTER TABLE `itens_pedido`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=280;
 
 --
+-- AUTO_INCREMENT de tabela `movimentacoes_estoque`
+--
+ALTER TABLE `movimentacoes_estoque`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT de tabela `notificacoes`
 --
 ALTER TABLE `notificacoes`
@@ -758,7 +804,7 @@ ALTER TABLE `notificacoes`
 -- AUTO_INCREMENT de tabela `pagamentos_funcionarios`
 --
 ALTER TABLE `pagamentos_funcionarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de tabela `pedidos`
@@ -788,7 +834,7 @@ ALTER TABLE `produto_adicional`
 -- AUTO_INCREMENT de tabela `registros_diarios_funcionarios`
 --
 ALTER TABLE `registros_diarios_funcionarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `usuarios`
@@ -800,7 +846,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de tabela `vales_funcionarios`
 --
 ALTER TABLE `vales_funcionarios`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Restrições para tabelas despejadas
@@ -839,6 +885,12 @@ ALTER TABLE `itens_grupo_combo`
 ALTER TABLE `itens_pedido`
   ADD CONSTRAINT `itens_pedido_ibfk_1` FOREIGN KEY (`id_pedido`) REFERENCES `pedidos` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `itens_pedido_ibfk_2` FOREIGN KEY (`id_produto`) REFERENCES `produtos` (`id`) ON DELETE SET NULL;
+
+--
+-- Restrições para tabelas `movimentacoes_estoque`
+--
+ALTER TABLE `movimentacoes_estoque`
+  ADD CONSTRAINT `movimentacoes_estoque_ibfk_1` FOREIGN KEY (`id_produto`) REFERENCES `produtos` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `pagamentos_funcionarios`

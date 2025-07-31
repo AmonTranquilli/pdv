@@ -39,6 +39,12 @@ $nivel_acesso = $_SESSION['nivel_acesso'] ?? 'N/A';
             <li>
                 <a href="/pdv/admin/gestor_pedidos/index.php"><i class="fas fa-tasks"></i> <span>Gestor de Pedidos</span></a>
             </li>
+            <li class="has-submenu">
+                <a href="#"><i class="fas fa-boxes"></i> <span>Inventario</span> <i class="fas fa-chevron-down arrow"></i></a>
+                <ul class="submenu">
+                    <li><a href="/pdv/admin/operacional/inventario.php">Estoque</a></li>
+                </ul>
+            </li>
             <li>
                 <a href="/pdv/admin/pedidos/pedidos.php"><i class="fas fa-history"></i> <span>Histórico de Pedidos</span></a>
             </li>
